@@ -1,5 +1,7 @@
 # calval-RTC
 
+## **ALL MODULES ARE WORKS IN PROGRESS**
+
 **Tools for validating OPERA RTC products.**
 
 ---
@@ -11,7 +13,8 @@
 ---
 
 ## 2) Cross-correlation-based relative geolocation evaluation module
-1. TBD: development happening in `eml-cross-corr` branch
+1. Run `cross_correlation_relative_geolocation_evaluation/1a_prepare_data_from_hyp3.ipynb`
+1. Run `cross_correlation_relative_geolocation_evaluation/2b_check_cross_correlation_on_two_scenes.ipynb` 
 
 ---
 
