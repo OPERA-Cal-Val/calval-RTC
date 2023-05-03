@@ -3,34 +3,19 @@ channels:
   - conda-forge
 dependencies:
   - asf_search
+  - dask
+  - distributed
   - gdal  
   - geopandas
   - hyp3_sdk
   - ipyfilechooser
   - ipympl
-#  - jupyterlab
   - ipywidgets<8.0.0
-#  - kernda
   - matplotlib
-#  - mgrs
-#  - netcdf4
   - numpy
   - opensarlab_lib
   - pandas
-#  - pip
   - plotly
-#  - pycrs
-#  - pyproj
-#  - python=3.9
-#  - rasterio
-#  - rioxarray
-#  - s3fs
+  - rasterio
   - scikit-image
-#  - scipy
   - shapely
-#  - traitlets==5.1.1
-#  - xarray
-#  - zarr
-#  - pip:
-#    - mpldatacursor
-#    - url-widget
