@@ -6,6 +6,14 @@
 
 ---
 
+## CalVal Data Access
+
+`OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb`
+
+Run the above notebook to create RTC and static file mosaics to input to CalVal modules described below.
+
+---
+
 ## 1) Point Target-based absolute geolocation evaluation module
 
 1. Run `point_target-based_absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb`
