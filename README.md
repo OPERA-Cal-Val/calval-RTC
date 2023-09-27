@@ -32,9 +32,12 @@ The notebook:
 Run the `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` notebook on a list of Sentinel-1 scenes using the `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py` Python script.
 
 - Update the `scenes` list in the script to contain the desired scene IDs
+- Update `opera_dir` to the directory in which you would like to store your RTC directories
+- Update `keep_date_index` to target a given batch of samples
+  - 0: oldest sample, -1: most recent sample, -2: 2nd to most recent sample, etc...
 - In a terminal, run the following commands:
   1. `conda activate opera_calval_rtc`
-  1. `python papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py`
+  2. `python papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py`
 
 
 ---
