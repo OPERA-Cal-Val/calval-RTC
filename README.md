@@ -5,6 +5,11 @@
 **Tools for validating OPERA RTC products.**
 
 ---
+## Create the `opera_calval_rtc` Conda Environment
+
+- create the `opera_calval_rtc` conda environment using `environment/environment.yaml`
+
+---
 
 ## CalVal Data Access
 
