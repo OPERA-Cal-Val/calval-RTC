@@ -8,16 +8,61 @@
 
 ## CalVal Data Access
 
-`OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb`
+#### Run The Notebook
 
-Run the above notebook to create RTC and static file mosaics as input to CalVal modules described below.
+Run the `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` notebook to create RTC and static file mosaics as inputs to CalVal modules.
+
+The notebook:
+- Inputs a Sentinel-1 scene ID
+- Identifies potential bursts associated with the scene
+- Searches `s3://opera-pst-rs-pop1/products/RTC_S1` for bursts
+- Filters discovered bursts for the most recent, 2nd to most recent, etc... batch of samples
+- Downloads VV, VH, incidence angle map, local incidence angle map, and layover/shadow mask
+- Reprojects all bursts in scene to prodominant UTM (if necessary)
+- Merges all bursts and saves mosaics
+- Deletes bursts
+
+#### Run as a Script with Papermill
+
+Run the `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` notebook on a list of Sentinel-1 scenes using the `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py` Python script.
+
+- Update the `scenes` list in the script to contain the desired scene IDs
+- In a terminal, run the following commands:
+  1. `conda activate opera_calval_rtc`
+  1. `python papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py`
+
 
 ---
 
 ## 1) Point Target-based absolute geolocation evaluation module
 
-1. Download and mosaic OPERA RTC sample burst data for a given Seninel-1 scene using the notebook `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb`
-1. Run `point_target-based_absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb`
+1. Download and mosaic OPERA RTC sample burst data for a given Seninel-1 scene using the notebook `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` or the Python script `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py`
+1. Run the notebook to evaluate absolute geolocation on a single scene or the Python script to evaluate multiple scenes
+
+#### Run the Notebook:
+
+Run `point_target-based_absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb` notebook
+
+The notebook:
+- Inputs a path to the directory holding an RTC mosaic
+- Creates an output directory named `absolute_geolocation_{S1 scene ID}`
+- Deletes all mosaics except VV polarization, which is moved to the output directory
+- Identifies corner reflector site intersecting data
+- Downloads corner reflector data
+- Filters corner reflectors, removing those facing away from the sensor
+- Calculates the geolocation error in Northing and Easting
+- Removes corner refectors that fall on the edge of a pixel
+- Plots the error
+-  Appends results to a CSV file
+
+#### Run as a Script with Papermill:
+
+Run the `point_target-based_absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb` notebook on a list of paths to OPERA RTC mosaics using the `calval-RTC/point_target-based_absolute_geolocation_evaluation/papermill_ALE_OPERA-RTC_v2.py` Python script.
+
+- Update the `data_dirs` list in the script with paths to directories containing OPERA RTC mosacis
+- In a terminal, run the following commands:
+  1. `conda activate opera_calval_rtc`
+  1. `python path/to/point_target-based_absolute_geolocation_evaluation/papermill_ALE_OPERA-RTC_v2.py`
 
 ---
 
