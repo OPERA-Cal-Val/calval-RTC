@@ -1,3 +1,0 @@
-# Other software (not conda/pip) needed for the notebooks to properly run
-wget
-unzip
