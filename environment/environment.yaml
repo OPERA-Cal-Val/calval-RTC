@@ -15,6 +15,7 @@ dependencies:
   - ipympl
   - isce3
   - jupyter
+  - lmfit
   - matplotlib<3.7.0
   - mgrs
   - numpy
