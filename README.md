@@ -23,7 +23,7 @@ The notebook:
 - Searches `s3://opera-pst-rs-pop1/products/RTC_S1` for bursts
 - Filters discovered bursts for the most recent, 2nd to most recent, etc... batch of samples
 - Downloads VV, VH, incidence angle map, local incidence angle map, and layover/shadow mask
-- Reprojects all bursts in scene to prodominant UTM (if necessary)
+- Reprojects all bursts in scene to predominant UTM (if necessary)
 - Merges all bursts and saves mosaics
 - Deletes bursts
 
@@ -44,7 +44,7 @@ Run the `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` notebook on a 
 
 ## Point Target-Based Absolute Geolocation Evaluation Module
 
-1. Download and mosaic OPERA RTC sample burst data for a given Seninel-1 scene using the notebook `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` or the Python script `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py` (see above instructions)
+1. Download and mosaic OPERA RTC sample burst data for a given Sentinel-1 scene using the notebook `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` or the Python script `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py` (see above instructions)
 1. Run the notebook to evaluate absolute geolocation on a single scene or the Python script to evaluate multiple scenes (instructions follow)
 
 #### **Option 1: Run the Absolute Geolocation Validation Notebook:**
@@ -59,7 +59,7 @@ The notebook:
 - Downloads corner reflector data
 - Filters corner reflectors, removing those facing away from the sensor
 - Calculates the geolocation error in Northing and Easting
-- Removes corner refectors that fall on the edge of a pixel
+- Removes corner reflectors that fall on the edge of a pixel
 - Plots the error
 -  Appends results to a CSV file
 
@@ -67,7 +67,7 @@ The notebook:
 
 Run the `point_target-based_absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb` notebook on a list of paths to OPERA RTC mosaics using the `calval-RTC/point_target-based_absolute_geolocation_evaluation/papermill_ALE_OPERA-RTC_v2.py` Python script
 
-- Update the `data_dirs` list in the script with paths to directories containing OPERA RTC mosacis
+- Update the `data_dirs` list in the script with paths to directories containing OPERA RTC mosaics
 - In a terminal, run the following commands:
   1. `conda activate opera_calval_rtc`
   1. `python path/to/point_target-based_absolute_geolocation_evaluation/papermill_ALE_OPERA-RTC_v2.py`
@@ -77,7 +77,7 @@ Run the `point_target-based_absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb`
 
 ## Cross-Correlation-Based Relative Geolocation Evaluation Module
 
-1. Download and mosaic a OPERA RTC sample burst data for a stack of Seninel-1 scenes using the notebook `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` or the Python script `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py` (see above instructions)
+1. Download and mosaic a OPERA RTC sample burst data for a stack of Sentinel-1 scenes using the notebook `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` or the Python script `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py` (see above instructions)
 1. Run the notebook to evaluate relative geolocation between scenes with a cross-correlation approach (instructions follow)
 
 #### **Option 1: Run the Cross-Correlation-Based Relative Geolocation Evaluation Notebook:**
@@ -118,7 +118,7 @@ Run the `cross_correlation_relative_geolocation_evaluation/papermill_OPERA_RTC_C
 
 ## 3) Radiometric Terrain Flattening Performance Evaluation Module: Gamma Naught Comparisons of Foreslope, Flat, and Backslope Pixels in Forested Regions
 
-1. Download and mosaic OPERA RTC sample burst data for a given Seninel-1 scene using the notebook `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` or the Python script `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py` (see above instructions)
+1. Download and mosaic OPERA RTC sample burst data for a given Sentinel-1 scene using the notebook `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` or the Python script `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py` (see above instructions)
 
 #### **Option 1: Run the 3 Data Prep Notebooks and the Slope Comparison Notebook**
 
@@ -151,4 +151,4 @@ Run `compare_gamma0_on_foreslope_flat_backslope/papermill_gamma0_slope_compariso
 
 ## 4) Radiometric Terrain Flattening Performance: Regression Analysis of Terrain Flattened Gamma Naught and Local Incidence Angle
 
-Work in progess
+Work in progress
