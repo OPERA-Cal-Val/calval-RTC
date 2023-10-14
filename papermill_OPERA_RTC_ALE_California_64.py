@@ -35,7 +35,7 @@ else:
     raise Exception(f"Found multiple entries in {s1_csv} for {site}, orbital_path {orbital_path}, {calval_module}")
 
 # list of Sentinel-1 scene IDs for which to download and mosaic bursts
-scenes = ids.split(', ')[:2]
+scenes = ids.split(', ') # slice this list to test run a subset of scenes
 
 parameters = {
     "scene": "",
