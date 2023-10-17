@@ -14,7 +14,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--site', type=str, required=True, help='California, Oklahoma')
     parser.add_argument('--orbital_path', type=int, required=True, help='34, 64, 107')
-    parser.add_argument('--skip_download', default=False, action='store_true')
+    parser.add_argument('--skip_download', default=False, action='store_true',
+                        help="Skip downloading and mosaicking of bursts and validate previously prepared data."))
     return parser.parse_args()
 
 
