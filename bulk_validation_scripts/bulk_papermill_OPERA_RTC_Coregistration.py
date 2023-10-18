@@ -5,9 +5,20 @@ import pandas as pd
 import papermill as pm
 from pathlib import Path
 import subprocess
+import sys
 from typing import Union
+from tqdm.auto import tqdm
+from urllib import request
+from zipfile import ZipFile
+
+from osgeo import gdal
+gdal.UseExceptions()
 
 from opensarlab_lib import work_dir
+
+current = Path('..').resolve()
+sys.path.append(str(current))
+import util.geo as util
 
 
 def parse_args():
@@ -22,40 +33,84 @@ def parse_args():
 
 
 def download_mosaic_data(parent_data_dir, args):
+    # unzip linked_data.csv
+    zip_path = Path.cwd().parent/"linking-data/linked_data.csv.zip"
+    linked_data_csv = Path.cwd().parent/'linking-data/linked_data.csv'
+    if not linked_data_csv.exists():
+        with ZipFile(zip_path, 'r') as zObject: 
+            zObject.extractall(path=zip_path.parent)
+    
+    # load burst urls for site/calval module
     calval_module = 'Coregistration'
-    # Read S1 scene IDs from OPERA-RTC_CalVal_S1_Scene_IDs.csv
-    s1_csv = Path.cwd().parent/'OPERA-RTC_CalVal_S1_Scene_IDs.csv'
-    df = pd.read_csv(s1_csv)
+    df = pd.read_csv(linked_data_csv)
     df = df.where((df.Site == args.site) & 
                   (df.Orbital_Path == args.orbital_path) & 
                   (df.CalVal_Module == calval_module)).dropna()
-    if len(df) == 1:
-        ids = df.iloc[0].S1_Scene_IDs
-    elif len(df) > 1:
-        raise Exception(f"Found multiple entries in {s1_csv} for {args.site}, orbital_path {args.orbital_path}, {calval_module}")
-    else:
-        raise Exception(f"Found no entries in {s1_csv} for {args.site}, orbital_path {args.orbital_path}, {calval_module}")
-    scenes = ids.split(', ')[:4] # slice this list to test run a subset of scenes
-
     
-    data_download_parameters = {
-        "scene": "",
-        "opera_dir": str(parent_data_dir), # parent directory in which OPERA RTC directories will be stored
-        "keep_date_index": -1 # 0: oldest sample, -1: most recent sample, -2: 2nd to most recent sample, etc...
-    }
+    scenes = list(df.S1_Scene_IDs)
+    for s in tqdm(scenes):
+        # define/create paths to data dirs
+        rtc_dir = parent_data_dir/f"OPERA_L2-RTC_{s}_30_v1.0"
+        vv_burst_dir = rtc_dir/"vv_bursts"
+        vh_burst_dir = rtc_dir/"vh_bursts"
+        for pth in [rtc_dir, vv_burst_dir, vh_burst_dir]:
+            pth.mkdir(exist_ok=True, parents=True)
+        
 
-    Path(data_download_parameters["opera_dir"]).mkdir(parents=True, exist_ok=True)
+        
+        # download bursts
+        vv_urls = df.where(df.S1_Scene_IDs==s).dropna().vv_url.tolist()[0].split(' ')
+        vh_urls = df.where(df.S1_Scene_IDs==s).dropna().vh_url.tolist()[0].split(' ')
+        path_dict = {vv_burst_dir: vv_urls, vh_burst_dir: vh_urls}
+        for pth in path_dict:
+            for burst in path_dict[pth]:
+                response = request.urlretrieve(burst, pth/burst.split('/')[-1])
+                
+        vv_bursts = list(vv_burst_dir.glob('*VV.tif'))
+        vh_bursts = list(vh_burst_dir.glob('*VH.tif'))
+        epsgs = util.get_projection_counts(vv_bursts)
+        predominant_epsg = None if len(epsgs) == 1 else max(epsgs, key=epsgs.get)
+        
+        vv_merge_str = ''
+        vh_merge_str = ''
+        for bursts in [vv_bursts, vh_bursts]:
+            for pth in bursts:
+                #build merge strings
+                if 'VV.tif' in str(pth):
+                    vv_merge_str = f"{vv_merge_str} {str(pth)}" 
+                elif 'VH.tif' in str(pth):
+                    vh_merge_str = f"{vh_merge_str} {str(pth)}"
+                    
+                # project to predominant UTM (when necessary)
+                if predominant_epsg:
+                    src_SRS = util.get_projection(str(pth))
+                    if src_SRS != predominant_epsg:
+                        res = util.get_res(pth)
+                        no_data_val = util.get_no_data_val(pth)
+                        temp = pth.parent/f"temp_{pth.stem}.tif"
+                        pth.rename(temp)
 
-    for s in scenes:
-        output_path = str(Path.cwd().parent/f'output_{s}_OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb')
-        data_download_parameters['scene'] = s
-        pm.execute_notebook(
-            str(Path.cwd().parent/'OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb'),
-            output_path,
-            kernel_name='python3',
-            parameters = data_download_parameters
-        )
-        Path(output_path).unlink()
+                        warp_options = {
+                            "dstSRS":f"EPSG:{predominant_epsg}", "srcSRS":f"EPSG:{src_SRS}",
+                            "targetAlignedPixels":True,
+                            "xRes":res, "yRes":res,
+                            "dstNodata": no_data_val
+                        }
+                        gdal.Warp(str(pth), str(temp), **warp_options)
+                        temp.unlink()
+                      
+        no_data_val = util.get_no_data_val(vv_bursts[0])
+        # merge vv bursts
+        vv_output = rtc_dir/f"OPERA_L2_RTC-S1_VV_{s}_30_v1.0_mosaic.tif"
+        vv_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {vv_output} {vv_merge_str}"
+        print(f"Merging bursts -> {vv_output}")
+        subprocess.run([vv_merge_command], shell=True)  
+        # merge vh bursts
+        vh_output = rtc_dir/f"OPERA_L2_RTC-S1_VH_{s}_30_v1.0_mosaic.tif"
+        vh_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {vh_output} {vh_merge_str}"
+        print(f"Merging bursts -> {vh_output}")
+        subprocess.run([vh_merge_command], shell=True)       
+        
         
         
 def coregistration(parent_data_dir, args):           
@@ -66,20 +121,17 @@ def coregistration(parent_data_dir, args):
 
     output_dir = parent_data_dir.parent/f"output_Coregistration"
 
-    polarizations = ['vv', 'vh']
+    polarizations = ['VV', 'VH']
 
     # for i, d in enumerate(stack_dirs):
     for p in polarizations:  
-        # comment out any file types in cleanup_list that you wish to save
-        # uncomment those to delete
-        
+      
         if args.delete_intermediary:
             cleanup_list = (
                 f"{p} amplitude data, "
                 f"flattened {p} amplitude data, "
                 f"flattened and tiled {p} amplitude data, "
                 f"{p} tile correlation results, "
-                f", " #don't remove if cleanup list empty
             )
         else:
             cleanup_list = ''
