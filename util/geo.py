@@ -1,6 +1,7 @@
+from collections import Counter
 from pathlib import Path
 import re
-from typing import List, Union
+from typing import List, Union, Dict
 
 import numpy as np
 from osgeo import gdal
@@ -61,9 +62,35 @@ def get_projection(img_path: Union[Path, str]) -> Union[str, None]:
     else:
         return None
     
+    
+def get_projection_counts(tiff_paths: List[Union[Path, str]]) -> Dict:
+    """
+    Takes: List of string or posix paths to geotiffs
+    
+    Returns: Dictionary key: epsg, value: number of tiffs in that epsg 
+    """
+    epsgs = []
+    for p in tiff_paths:
+        epsgs.append(get_projection(p))
+
+    epsgs = dict(Counter(epsgs))
+    return epsgs
+    
 def poly_from_minx_miny_maxx_maxy(coords):
     return shapely.wkt.loads((f"POLYGON(({coords[0]} {coords[1]}, "
                               f"{coords[0]} {coords[3]}, "
                               f"{coords[2]} {coords[3]}, "
                               f"{coords[2]} {coords[1]}, "
                               f"{coords[0]} {coords[1]}))"))
+    
+
+def get_res(tiff):
+    tiff = str(tiff)
+    f =  gdal.Open(tiff)
+    return f.GetGeoTransform()[1] 
+
+
+def get_no_data_val(pth):
+    pth = str(pth)
+    f = gdal.Open(str(pth))
+    return np.nan if not f.GetRasterBand(1).GetNoDataValue() else f.GetRasterBand(1).GetNoDataValue()
