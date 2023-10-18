@@ -8,6 +8,7 @@ import sys
 from typing import Union
 from tqdm.auto import tqdm
 from urllib import request
+from zipfile import ZipFile
 
 from osgeo import gdal
 gdal.UseExceptions()
@@ -29,9 +30,15 @@ def parse_args():
 
 
 def download_mosaic_data(parent_data_dir, args):
+    # unzip linked_data.csv
+    zip_path = Path.cwd().parent/"linking-data/linked_data.csv.zip"
+    linked_data_csv = Path.cwd().parent/'linking-data/linked_data.csv'
+    if not linked_data_csv.exists():
+        with ZipFile(zip_path, 'r') as zObject: 
+            zObject.extractall(path=zip_path.parent)
+    
     # load burst urls for site/calval module
     calval_module = 'Absolute Geolocation Evaluation'
-    linked_data_csv = Path.cwd().parent/'linking-data/linked_data.csv'
     df = pd.read_csv(linked_data_csv)
     df = df.where((df.Site == "California") & 
                   (df.Orbital_Path == 64) & 
