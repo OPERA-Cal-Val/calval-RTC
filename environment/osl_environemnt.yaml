@@ -11,11 +11,10 @@ dependencies:
   - gdal  
   - geopandas
   - ipyfilechooser
-  - ipywidgets
+  - ipywidgets<8.0.0 
   - ipympl
   - isce3
   - jupyter
-  - jupyterlab_widgets~=3.0
   - lmfit
   - matplotlib<3.7.0
   - mgrs
