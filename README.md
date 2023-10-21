@@ -6,13 +6,29 @@
 ---
 ## Create the `opera_calval_rtc` Conda Environment
 
-- create the `opera_calval_rtc` conda environment using `environment/environment.yaml`
+If you are working locally:
+  - create the `opera_calval_rtc` conda environment using `environment/environment.yaml`
+    - In a terminal run `mamba env create -f path/to/calval-RTC/environment/environment.yaml`
+
+If you are working in [OpenSARLab](https://opensarlab.asf.alaska.edu/):
+  - create the `opera_calval_rtc` conda environment using `environment/osl_environment.yaml`
+    - Use the `~/conda_environments/Create_OSL_Conda_Environments.ipynb` notebook to create the environment 
 
 ---
 ---
 
 ## CalVal Data Access
 
+### Bulk Validation
+
+- Run the `Bulk_Validation.ipynb` notebook.
+  - The notebook will prompt you to select a validation module, validation site, and Sentinel-1 orbital path
+    - It will download the needed data and perform validation on every available scene for a given module, site, and orbital path      
+
+---
+---
+
+### Piecemeal Validation 
 #### **Option 1: Run The Notebook**
 
 Run the `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` notebook to create RTC and static file mosaics as inputs to CalVal modules.
