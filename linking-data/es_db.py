@@ -81,46 +81,29 @@ def get_rtc_docs(input_id: str,
 
 
 @backoff.on_exception(backoff.expo,
-                      TimeoutError,
+                      RemoteDisconnected,
                       max_tries=20,
                       jitter=backoff.full_jitter)
-def get_static_rtc_docs(rtc_docs: list[dict],
-                        target_rtc_version=RTC_SAS_VERSION) -> list[dict]:
-    burst_ids = [doc['metadata']['Files'][0]['burst_id'] for doc in rtc_docs]
-    burst_ids = list(set(burst_ids))
-
-    queries = [Q('bool',
-                 must=[Q('query_string',
-                         query=f'\"OPERA_L2_RTC-S1-STATIC_{burst_id}\"',
-                         default_field="metadata.id"),
-                       Q('query_string',
-                         query=f'\"{target_rtc_version}\"',
-                         default_field="metadata.sas_version")
-                         ])
-                for burst_id in burst_ids]
-
-    @backoff.on_exception(backoff.expo,
-                          RemoteDisconnected,
-                          max_tries=20,
-                          jitter=backoff.full_jitter)
-    def _get_static_doc_from_query(input_data):
-        search = get_search_client(index='static')
-        query_qs, burst_id = input_data
-        query = search.query(query_qs)
-        total = query.count()
-        # using this: https://github.com/elastic/elasticsearch-dsl-py/issues/737
-        if total == 0:
-            print(f'{burst_id} does not have a entry in ES')
-            return {burst_id: {}}
-        query = query[0:1]
-        resp = query.execute()
-        hits = list(resp.hits)
-        return {burst_id: hits[0].to_dict()}
-    input_data = list(zip(queries, burst_ids))
-    # data = list(map(_get_static_doc_from_query, input_data))
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        out_data = list((executor.map(_get_static_doc_from_query, input_data)))
-    return out_data
+def get_static_rtc_docs(burst_id: str) -> list[dict]:
+    search = get_search_client(index='static')
+    query_qs = Q('query_string',
+                 query=f'\"OPERA_L2_RTC-S1-STATIC_{burst_id}\"',
+                 default_field="metadata.id")
+    query = search.query(query_qs)
+    total = query.count()
+    if total == 0:
+        print(f'{burst_id} does not have a entry in ES')
+        return [{'burst_id': burst_id,
+                 'sas_version': '',
+                 'product_urls': ''}]
+    query = query[0:total]
+    resp = query.execute()
+    hits = list(resp.hits)
+    out = [{'burst_id': burst_id,
+            'sas_version': hit['metadata']['sas_version'],
+            'product_urls': ' '.join(hit['metadata']['product_urls'])} for hit in hits]
+    out = sorted(out, key=lambda data_dict: data_dict['sas_version'], reverse=True)
+    return out
 
 
 def get_rtc_urls(rtc_docs_lst: list[dict]) -> dict:
