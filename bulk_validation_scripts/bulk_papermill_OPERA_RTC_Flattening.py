@@ -221,7 +221,7 @@ def flatten(input_data_dir):
     input_dirs_prep_2 = [intermediary_parent_dir/f"{Path(p).stem}_prepped_for_slope_comparison" for p in data_dirs]
     input_dirs_gamma0_compare = [intermediary_parent_dir/f"{Path(p).name}_Tree_Cover" for p in input_dirs_prep_2]
 
-    with work_dir(Path.cwd().parent/"compare_gamma0_on_foreslope_flat_backslope"):
+    with work_dir(Path.cwd().parent/"flattening"):
         for i, d in enumerate(data_dirs):
             opera_id = d.split('/')[-1]
             output_dir = output_parent_dir/f"Output_Tree_Cover_Slope_Comparisons_{opera_id}"
@@ -252,9 +252,9 @@ def flatten(input_data_dir):
             ####### Gamma0 Comparisons #######
             parameters_slope_compare['data_dir'] = str(input_dirs_gamma0_compare[i])
             parameters_slope_compare['output_dir'] = str(output_dir)
-            output_gamma0_compare = output_dir/f'output_{Path(d).name}_Backscatter_Distributions_by_Slope.ipynb'
+            output_gamma0_compare = output_dir/f'output_{Path(d).name}_flattening_analysis.ipynb'
             pm.execute_notebook(
-                'gamma0_comparisons_on_foreslope_backslope/Backscatter_Distributions_by_Slope.ipynb',
+                'flattening_analysis/flattening_analysis.ipynb',
                 output_gamma0_compare,
                 kernel_name='python3',
                 parameters = parameters_slope_compare
@@ -315,9 +315,9 @@ def flatten(input_data_dir):
 
 #         ####### Gamma0 Comparisons #######
 #         parameters_slope_compare['data_dir'] = str(input_dirs_gamma0_compare[i])
-#         output_gamma0_compare = output_dir/f'output_{Path(d).name}_Backscatter_Distributions_by_Slope.ipynb'
+#         output_gamma0_compare = output_dir/f'output_{Path(d).name}_flattening_analysis.ipynb'
 #         pm.execute_notebook(
-#             'gamma0_comparisons_on_foreslope_backslope/Backscatter_Distributions_by_Slope.ipynb',
+#             'flattening_analysis/flattening_analysis.ipynb',
 #             output_gamma0_compare,
 #             kernel_name='python3',
 #             parameters = parameters_slope_compare

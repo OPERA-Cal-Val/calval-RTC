@@ -57,9 +57,9 @@ for i, d in enumerate(data_dirs):
     
     ####### Gamma0 Comparisons #######
     parameters_slope_compare['data_dir'] = str(input_dirs_gamma0_compare[i])
-    output_gamma0_compare = output_dir/f'output_{Path(d).name}_Backscatter_Distributions_by_Slope.ipynb'
+    output_gamma0_compare = output_dir/f'output_{Path(d).name}_flattening_analysis.ipynb'
     pm.execute_notebook(
-        'gamma0_comparisons_on_foreslope_backslope/Backscatter_Distributions_by_Slope.ipynb',
+        'flattening_analysis/flattening_analysis.ipynb',
         output_gamma0_compare,
         kernel_name='python3',
         parameters = parameters_slope_compare

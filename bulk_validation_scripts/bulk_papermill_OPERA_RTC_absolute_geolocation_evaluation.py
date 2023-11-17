@@ -104,15 +104,15 @@ def absolute_geolocation_evaluation(parent_data_dir, args):
         "savepath": ""
     }
 
-    with work_dir(Path.cwd().parent/"point_target-based_absolute_geolocation_evaluation"):
+    with work_dir(Path.cwd().parent/"absolute_geolocation_evaluation"):
         for i, d in enumerate(tqdm(data_dirs)):
             print(f"Performing Absolute Geolocation Evaluation on {d}")
             parameters['data_dir'] = str(d)
             parameters['savepath'] = str(output_dirs[i])
             output_dirs[i].mkdir(parents=True, exist_ok=True)
-            output = output_dirs[i]/f'output_{Path(d).name}_ALE_OPERA-RTC_v2.ipynb'
+            output = output_dirs[i]/f'output_{Path(d).name}_absolute_location_evaluation.ipynb'
             pm.execute_notebook(
-                Path.cwd()/'ALE_OPERA-RTC_v2.ipynb',
+                Path.cwd()/'absolute_location_evaluation.ipynb',
                 output,
                 kernel_name='python3',
                 parameters = parameters

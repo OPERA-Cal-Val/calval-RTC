@@ -33,9 +33,9 @@ for i, d in enumerate(stack_dirs):
             "cleanup_list": cleanup_list,     
         }
         output_dirs[i].mkdir(exist_ok=True)
-        output = output_dirs[i]/f'output_{Path(d).name}_{p}_OPERA_RTC_Cross_Correlation.ipynb'
+        output = output_dirs[i]/f'output_{Path(d).name}_{p}_coregistration.ipynb'
         pm.execute_notebook(
-            'OPERA_RTC_Cross_Correlation.ipynb',
+            'coregistration.ipynb',
             output,
             kernel_name='python3',
             parameters = parameters

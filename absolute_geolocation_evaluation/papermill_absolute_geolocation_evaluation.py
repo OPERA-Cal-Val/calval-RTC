@@ -17,9 +17,9 @@ parameters = {
 for i, d in enumerate(data_dirs):
     parameters['data_dir'] = d
     output_dirs[i].mkdir(exist_ok=True)
-    output = output_dirs[i]/f'output_{Path(d).name}_ALE_OPERA-RTC_v2.ipynb'
+    output = output_dirs[i]/f'output_{Path(d).name}_absolute_location_evaluation.ipynb'
     pm.execute_notebook(
-        'ALE_OPERA-RTC_v2.ipynb',
+        'absolute_location_evaluation.ipynb',
         output,
         kernel_name='python3',
         parameters = parameters

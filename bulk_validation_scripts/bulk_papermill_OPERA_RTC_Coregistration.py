@@ -146,9 +146,9 @@ def coregistration(parent_data_dir, args):
         output_dir.mkdir(exist_ok=True)
         output = output_dir/f"output_{args.site.replace(' ', '_')}_{args.orbital_path}_{p}_OPERA_RTC_Coregistration.ipynb"
         
-        with work_dir(Path.cwd().parent/"cross_correlation_relative_geolocation_evaluation"):
+        with work_dir(Path.cwd().parent/"coregistration"):
             pm.execute_notebook(
-                'OPERA_RTC_Cross_Correlation.ipynb',
+                'coregistration.ipynb',
                 output,
                 kernel_name='python3',
                 parameters = parameters
