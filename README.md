@@ -140,9 +140,9 @@ Run the `coregistration/papermill_coregistration.py` script on multiple RTC stac
 #### **Option 1: Run the 3 Data Prep Notebooks and the Slope Comparison Notebook**
 
 1. Prepare the data for the analysis notebook by running the following 3 data prep notebooks
-    1. `flattening/data_prep/Prep_OPERA_RTC_CalVal_Slope_Compare_Part_1.ipynb`
+    1. `flattening/data_prep/prep_flattening_part_1.ipynb`
       - Downloads [Copernicus Global Land Cover (100m)](https://lcviewer.vito.be/download) tiles, projects them to OPERA RTC's UTM, mosaics them, and subsets mosaic to OPERA RTC extents
-    3. `flattening/data_prep/Prep_OPERA_RTC_CalVal_Slope_Compare_Part_2.ipynb`
+    3. `flattening/data_prep/prep_flattening_part_2.ipynb`
       - Creates geotiffs for each polarization and slope. All non-forested pixels are masked and sets of tiffs are produced for each polarization containing only foreslope pixels, backslope pixels, or flat pixels.
     4. `flattening/data_prep/Prep_OPERA_RTC_CalVal_Slope_Compare_Part_3.ipynb`
       -  Create MGRS tiles for each prepared geotiff
