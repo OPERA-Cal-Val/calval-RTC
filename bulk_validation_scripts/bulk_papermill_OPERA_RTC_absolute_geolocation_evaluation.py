@@ -45,7 +45,7 @@ def download_mosaic_data(parent_data_dir, args):
                   (df.CalVal_Module == calval_module)).dropna()
     
     scenes = list(df.S1_Scene_IDs)
-    for s in tqdm(scenes[:2]):
+    for s in tqdm(scenes):
         # define/create paths to data dirs
         rtc_dir = parent_data_dir/f"OPERA_L2-RTC_{s}_30_v1.0"
         rtc_dir.mkdir(exist_ok=True, parents=True)
