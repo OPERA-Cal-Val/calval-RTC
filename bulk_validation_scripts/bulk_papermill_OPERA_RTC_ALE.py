@@ -31,8 +31,8 @@ def parse_args():
 
 def download_mosaic_data(parent_data_dir, args):
     # unzip linked_data.csv
-    zip_path = Path.cwd().parent/"linking-data/linked_data.csv.zip"
-    linked_data_csv = Path.cwd().parent/'linking-data/linked_data.csv'
+    zip_path = Path.cwd().parent/"linking-data/opera_rtc_table.csv.zip"
+    linked_data_csv = Path.cwd().parent/'linking-data/opera_rtc_table.csv'
     if not linked_data_csv.exists():
         with ZipFile(zip_path, 'r') as zObject: 
             zObject.extractall(path=zip_path.parent)
@@ -45,7 +45,7 @@ def download_mosaic_data(parent_data_dir, args):
                   (df.CalVal_Module == calval_module)).dropna()
     
     scenes = list(df.S1_Scene_IDs)
-    for s in tqdm(scenes):
+    for s in tqdm(scenes[:2]):
         # define/create paths to data dirs
         rtc_dir = parent_data_dir/f"OPERA_L2-RTC_{s}_30_v1.0"
         rtc_dir.mkdir(exist_ok=True, parents=True)
