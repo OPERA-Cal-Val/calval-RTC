@@ -2,6 +2,7 @@ name: opera_calval_rtc
 channels:
   - conda-forge
 dependencies:
+  - python=3.11 # for papermill, which requires 5yr old https://anaconda.org/conda-forge/ansiwrap
   - asf_search
   - branca
   - boto3
@@ -11,10 +12,11 @@ dependencies:
   - gdal  
   - geopandas
   - ipyfilechooser
-  - ipywidgets<8.0.0 
+  - ipywidgets
   - ipympl
   - isce3
   - jupyter
+  - jupyterlab_widgets~=3.0
   - lmfit
   - matplotlib<3.7.0
   - mgrs

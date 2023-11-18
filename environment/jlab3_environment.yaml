@@ -1,0 +1,34 @@
+name: opera_calval_rtc
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11 # for papermill, which requires 5yr old https://anaconda.org/conda-forge/ansiwrap
+  - asf_search
+  - branca
+  - boto3
+  - dask
+  - distributed
+  - folium
+  - gdal  
+  - geopandas
+  - ipyfilechooser
+  - ipywidgets<8.0.0 
+  - ipympl
+  - isce3
+  - jupyter
+  - lmfit
+  - matplotlib<3.7.0
+  - mgrs
+  - numpy
+  - opensarlab_lib
+  - pandas
+  - papermill
+  - plotly
+  - pyproj
+  - pysolid
+  - rasterio
+  - rioxarray
+  - scikit-image
+  - scipy
+  - shapely
+  - pip
