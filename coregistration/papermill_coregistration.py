@@ -12,7 +12,7 @@ delete_mosaics = False
 
 output_dirs = [Path.cwd()/f"cross_correlation_{Path(p).name}" for p in stack_dirs]
 
-polarizations = ['vv', 'vh']
+polarizations = ['VV', 'VH']
 
 for i, d in enumerate(stack_dirs):
     for p in polarizations:
