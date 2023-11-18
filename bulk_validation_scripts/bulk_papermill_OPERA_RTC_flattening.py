@@ -57,7 +57,7 @@ def download_mosaic_data(input_data_dir, args):
     df_static = pd.read_csv(opera_static_csv)      
     
     
-    for scene_id in df_rtc.S1_Scene_IDs[]:
+    for scene_id in df_rtc.S1_Scene_IDs:
         # define/create paths to data dirs
         rtc_dir = input_data_dir/f"OPERA_L2-RTC_{scene_id}_30_v1.0"
         vv_burst_dir = rtc_dir/"vv_bursts"
