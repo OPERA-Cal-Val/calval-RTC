@@ -66,7 +66,7 @@ Run the `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` notebook on a 
 
 #### **Option 1: Run the Absolute Geolocation Validation Notebook:**
 
-Run `point_target-based_absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb` notebook
+Run `absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb` notebook
 
 The notebook:
 - Inputs a path to the directory holding an RTC mosaic
@@ -82,12 +82,12 @@ The notebook:
 
 #### **Option 2: Run as a Script with Papermill:**
 
-Run the `point_target-based_absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb` notebook on a list of paths to OPERA RTC mosaics using the `calval-RTC/point_target-based_absolute_geolocation_evaluation/papermill_ALE_OPERA-RTC_v2.py` Python script
+Run the `absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb` notebook on a list of paths to OPERA RTC mosaics using the `calval-RTC/absolute_geolocation_evaluation/papermill_absolute_geolocation_evaluation.py` Python script
 
 - Update the `data_dirs` list in the script with paths to directories containing OPERA RTC mosaics
 - In a terminal, run the following commands:
   1. `conda activate opera_calval_rtc`
-  1. `python path/to/point_target-based_absolute_geolocation_evaluation/papermill_ALE_OPERA-RTC_v2.py`
+  1. `python path/to/absolute_geolocation_evaluation/papermill_absolute_geolocation_evaluation.py`
 
 ---
 ---
@@ -99,7 +99,7 @@ Run the `point_target-based_absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb`
 
 #### **Option 1: Run the Cross-Correlation-Based Relative Geolocation Evaluation Notebook:**
 
-Run the `cross_correlation_relative_geolocation_evaluation/OPERA_RTC_Cross_Correlation.ipynb` notebook
+Run the `coregistration/coregistration.ipynb` notebook
 
 The notebook:
 - Buffers all scenes in the stack so they have the same extents
@@ -116,7 +116,7 @@ The notebook:
 
 #### **Option 2: Run as a Script With Papermill
 
-Run the `cross_correlation_relative_geolocation_evaluation/papermill_OPERA_RTC_Cross_Correlation.py` script on multiple RTC stacks
+Run the `coregistration/papermill_coregistration.py` script on multiple RTC stacks
 
 1. Update `stack_dirs`, adding paths to the directories holding RTC stacks
 1. Update `delete_mosaics`
@@ -128,7 +128,7 @@ Run the `cross_correlation_relative_geolocation_evaluation/papermill_OPERA_RTC_C
 1. Run script in `opera_calval_rtc` conda environment
    1. Open a terminal and run the following commands
    2. `conda activate opera_calval_rtc`
-   3. `Python path/to/cross_correlation_relative_geolocation_evaluation/papermill_OPERA_RTC_Cross_Correlation.py`
+   3. `Python path/to/coregistration/papermill_coregistration.py`
 
 ---
 ---
@@ -140,18 +140,18 @@ Run the `cross_correlation_relative_geolocation_evaluation/papermill_OPERA_RTC_C
 #### **Option 1: Run the 3 Data Prep Notebooks and the Slope Comparison Notebook**
 
 1. Prepare the data for the analysis notebook by running the following 3 data prep notebooks
-    1. `compare_gamma0_on_foreslope_flat_backslope/data_prep/Prep_OPERA_RTC_CalVal_Slope_Compare_Part_1.ipynb`
+    1. `flattening/data_prep/prep_flattening_part_1.ipynb`
       - Downloads [Copernicus Global Land Cover (100m)](https://lcviewer.vito.be/download) tiles, projects them to OPERA RTC's UTM, mosaics them, and subsets mosaic to OPERA RTC extents
-    3. `compare_gamma0_on_foreslope_flat_backslope/data_prep/Prep_OPERA_RTC_CalVal_Slope_Compare_Part_2.ipynb`
+    3. `flattening/data_prep/prep_flattening_part_2.ipynb`
       - Creates geotiffs for each polarization and slope. All non-forested pixels are masked and sets of tiffs are produced for each polarization containing only foreslope pixels, backslope pixels, or flat pixels.
-    4. `compare_gamma0_on_foreslope_flat_backslope/data_prep/Prep_OPERA_RTC_CalVal_Slope_Compare_Part_3.ipynb`
+    4. `flattening/data_prep/Prep_OPERA_RTC_CalVal_Slope_Compare_Part_3.ipynb`
       -  Create MGRS tiles for each prepared geotiff
  2. Run analysis notebook
-     1. `compare_gamma0_on_foreslope_flat_backslope/gamma0_comparisons_on_foreslope_backslope/Backscatter_Distributions_by_Slope.ipynb`   
+     1. `flattening/flattening_analysis/flattening_analysis.ipynb`   
 
 #### **Option 2: Run All Four Notebooks with a Script Using Papermill**
 
-Run `compare_gamma0_on_foreslope_flat_backslope/papermill_gamma0_slope_comparison.py` to run all four notebooks on multiple RTCs
+Run `flattening/papermill_flattening.py` to run all four notebooks on multiple RTCs
 
 - Update `data_dirs`, adding paths to directories holding RTCs
 - Update `log` to set log or power scale
@@ -160,7 +160,7 @@ Run `compare_gamma0_on_foreslope_flat_backslope/papermill_gamma0_slope_compariso
 1. Run script in `opera_calval_rtc` conda environment
    1. Open a terminal and run the following commands
    2. `conda activate opera_calval_rtc`
-   3. `Python path/to/compare_gamma0_on_foreslope_flat_backslope/papermill_gamma0_slope_comparison.py`
+   3. `Python path/to/flattening/papermill_flattening.py`
 
 
 ---

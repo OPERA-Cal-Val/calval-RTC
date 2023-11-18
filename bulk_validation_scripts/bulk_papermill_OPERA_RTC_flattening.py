@@ -57,7 +57,7 @@ def download_mosaic_data(input_data_dir, args):
     df_static = pd.read_csv(opera_static_csv)      
     
     
-    for scene_id in df_rtc.S1_Scene_IDs[]:
+    for scene_id in df_rtc.S1_Scene_IDs:
         # define/create paths to data dirs
         rtc_dir = input_data_dir/f"OPERA_L2-RTC_{scene_id}_30_v1.0"
         vv_burst_dir = rtc_dir/"vv_bursts"
@@ -221,7 +221,7 @@ def flatten(input_data_dir):
     input_dirs_prep_2 = [intermediary_parent_dir/f"{Path(p).stem}_prepped_for_slope_comparison" for p in data_dirs]
     input_dirs_gamma0_compare = [intermediary_parent_dir/f"{Path(p).name}_Tree_Cover" for p in input_dirs_prep_2]
 
-    with work_dir(Path.cwd().parent/"compare_gamma0_on_foreslope_flat_backslope"):
+    with work_dir(Path.cwd().parent/"flattening"):
         for i, d in enumerate(data_dirs):
             opera_id = d.split('/')[-1]
             output_dir = output_parent_dir/f"Output_Tree_Cover_Slope_Comparisons_{opera_id}"
@@ -229,9 +229,9 @@ def flatten(input_data_dir):
 
             ####### data prep notebook 1 #######
             parameters_prep_1['data_dir'] = d
-            output_1 = output_dir/f'output_{Path(d).name}_Prep_OPERA_RTC_CalVal_Slope_Compare_Part_1.ipynb'
+            output_1 = output_dir/f'output_{Path(d).name}_prep_flattening_part_1.ipynb'
             pm.execute_notebook(
-                'data_prep/Prep_OPERA_RTC_CalVal_Slope_Compare_Part_1.ipynb',
+                'data_prep/prep_flattening_part_1.ipynb',
                 output_1,
                 kernel_name='python3',
                 parameters = parameters_prep_1
@@ -240,9 +240,9 @@ def flatten(input_data_dir):
 
             ####### data prep notebook 2 #######
             parameters_prep_2['data_dir'] = str(input_dirs_prep_2[i])
-            output_2 = output_dir/f'output_{Path(d).name}_Prep_OPERA_RTC_CalVal_Slope_Compare_Part_2.ipynb'
+            output_2 = output_dir/f'output_{Path(d).name}_prep_flattening_part_2.ipynb'
             pm.execute_notebook(
-                'data_prep/Prep_OPERA_RTC_CalVal_Slope_Compare_Part_2.ipynb',
+                'data_prep/prep_flattening_part_2.ipynb',
                 output_2,
                 kernel_name='python3',
                 parameters = parameters_prep_2
@@ -252,78 +252,14 @@ def flatten(input_data_dir):
             ####### Gamma0 Comparisons #######
             parameters_slope_compare['data_dir'] = str(input_dirs_gamma0_compare[i])
             parameters_slope_compare['output_dir'] = str(output_dir)
-            output_gamma0_compare = output_dir/f'output_{Path(d).name}_Backscatter_Distributions_by_Slope.ipynb'
+            output_gamma0_compare = output_dir/f'output_{Path(d).name}_flattening_analysis.ipynb'
             pm.execute_notebook(
-                'gamma0_comparisons_on_foreslope_backslope/Backscatter_Distributions_by_Slope.ipynb',
+                'flattening_analysis/flattening_analysis.ipynb',
                 output_gamma0_compare,
                 kernel_name='python3',
                 parameters = parameters_slope_compare
             )
             subprocess.run([f"jupyter nbconvert {output_gamma0_compare} --to pdf"], shell=True)
-    
-#     # list of paths to OPERA-RTC mosaics on which to run gamma0 comparisons on foreslopes, flat areas, and backslopes
-#     data_dirs = [
-#         "/home/jovyan/calval-RTC/OPERA_RTC_S1A_IW_SLC__1SDV_20230707T015044_20230707T015112_049311_05Edf_rtc6_1A68",
-#     ]
-
-#     log = True # True: log scale, False: power scale
-
-#     parameters_prep_1 = {
-#         "data_dir": ""
-#     }
-
-#     parameters_prep_2 = {
-#         "data_dir": ""
-#     }
-
-#     parameters_slope_compare = {
-#         "data_dir": "",
-#         "log": log,
-#     }
-
-
-#     input_dirs_prep_2 = [Path(p).parent/f"{Path(p).stem}_prepped_for_slope_comparison" for p in data_dirs]
-
-#     input_dirs_gamma0_compare = [Path(p).parent/f"{Path(p).name}_Tree_Cover" for p in input_dirs_prep_2]
-
-#     for i, d in enumerate(data_dirs):
-#         opera_id = d.split('/')[-1]
-#         output_dir = Path(d).parent/f"Output_Tree_Cover_Slope_Comparisons_{opera_id}"
-#         output_dir.mkdir(exist_ok=True)
-
-#         ####### data prep notebook 1 #######
-#         parameters_prep_1['data_dir'] = d
-#         output_1 = output_dir/f'output_{Path(d).name}_Prep_OPERA_RTC_CalVal_Slope_Compare_Part_1.ipynb'
-#         pm.execute_notebook(
-#             'data_prep/Prep_OPERA_RTC_CalVal_Slope_Compare_Part_1.ipynb',
-#             output_1,
-#             kernel_name='python3',
-#             parameters = parameters_prep_1
-#         )
-#         subprocess.run([f"jupyter nbconvert {output_1} --to pdf_rtc"], shell=True) 
-
-#         ####### data prep notebook 2 #######
-#         parameters_prep_2['data_dir'] = str(input_dirs_prep_2[i])
-#         output_2 = output_dir/f'output_{Path(d).name}_Prep_OPERA_RTC_CalVal_Slope_Compare_Part_2.ipynb'
-#         pm.execute_notebook(
-#             'data_prep/Prep_OPERA_RTC_CalVal_Slope_Compare_Part_2.ipynb',
-#             output_2,
-#             kernel_name='python3',
-#             parameters = parameters_prep_2
-#         )
-#         subprocess.run([f"jupyter nbconvert {output_2} --to pdf_rtc"], shell=True) 
-
-#         ####### Gamma0 Comparisons #######
-#         parameters_slope_compare['data_dir'] = str(input_dirs_gamma0_compare[i])
-#         output_gamma0_compare = output_dir/f'output_{Path(d).name}_Backscatter_Distributions_by_Slope.ipynb'
-#         pm.execute_notebook(
-#             'gamma0_comparisons_on_foreslope_backslope/Backscatter_Distributions_by_Slope.ipynb',
-#             output_gamma0_compare,
-#             kernel_name='python3',
-#             parameters = parameters_slope_compare
-#         )
-#         subprocess.run([f"jupyter nbconvert {output_gamma0_compare} --to pdf_rtc"], shell=True) 
-
 
 def main():
     args = parse_args()
