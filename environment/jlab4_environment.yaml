@@ -33,3 +33,4 @@ dependencies:
   - scipy
   - shapely
   - pip
+  - wget
