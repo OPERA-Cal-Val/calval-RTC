@@ -2,13 +2,27 @@
 
 **Tools for validating OPERA RTC products.**
 
+[OPERA RTC Product Information](https://www.jpl.nasa.gov/go/opera/products/rtc-product)
+
+[OPERA Validation Plan](https://d2pn8kiwq2w21t.cloudfront.net/documents/OPERA_Validation_Plan.pdf) 
+
 ---
 ---
 ## Create the `opera_calval_rtc` Conda Environment
 
 If you are working locally:
-  - create the `opera_calval_rtc` conda environment using `environment/environment.yaml`
-    - In a terminal run `mamba env create -f path/to/calval-RTC/environment/environment.yaml`
+  - Make sure you have conda/mamba installed
+    - [Instructions to install miniforge (containing conda and mamba)](https://github.com/conda-forge/miniforge#mambaforge)
+  - Create the `opera_calval_rtc` conda environment using one of the `yaml` files in the `environments` directory
+    - `environment/environment.yaml`
+    - In a terminal, run:
+      - `mamba env create -f path/to/calval-RTC/environment/jlab4_environment.yaml`
+        - Use `calval-RTC/environment/jlab3_environment.yaml` if you'd like Jupyter Lab~=3.0
+  - Activate your environment and start Jupyter Lab. 
+    - In a terminal run: 
+      - `cd path/to/calval-RTC`
+      - `conda activate opera_calval_rtc`
+      - `jupyter lab`
 
 If you are working in [OpenSARLab](https://opensarlab.asf.alaska.edu/):
   - create the `opera_calval_rtc` conda environment using `environment/osl_environment.yaml`
@@ -16,17 +30,30 @@ If you are working in [OpenSARLab](https://opensarlab.asf.alaska.edu/):
 
 ---
 ---
+## Start Jupyter Lab in the `opera_calval_rtc` Environment
 
-## Bulk Validation
+- In a terminal, run:
+  - `cd path/to/calval-RTC`
+  - `conda activate opera_calval_rtc`
+  - `jupyter lab`
 
-- Run the `Bulk_Validation.ipynb` notebook.
+---
+---
+
+## Bulk Validation (Recommended)
+
+- Launch the `Bulk_Validation.ipynb` notebook.
+- Depending on where you run the notebook (locally, in OpenSARLab, or on another JupyterHub), you may need to select the kernel for the conda environment after launching the notebook
+  - Using the kernel selector at the top right of your notebook Jupyter Lab tab or the `Chang Kernel` option in the `Kernel` menu, select `opera_calval_rtc` 
+- Run the notebook 
   - The notebook will prompt you to select a validation module, validation site, and Sentinel-1 orbital path
-    - It will download the needed data and perform validation on every available scene for a given module, site, and orbital path      
+    - It will download the needed data and perform validation on every available scene for a given module, site, and orbital path
+    - All output will be stored in appropriately named directories alongside this repository  
 
 ---
 ---
 
-## Piecemeal Validation 
+## Piecemeal Validation (Use to validate specific scenes or batches of scenes)
 
 ### CalVal Data Access
 
@@ -40,7 +67,7 @@ The notebook:
 - Searches `s3://opera-pst-rs-pop1/products/RTC_S1` for bursts
 - Filters discovered bursts for the most recent, 2nd to most recent, etc... batch of samples
 - Downloads VV, VH, incidence angle map, local incidence angle map, and layover/shadow mask
-- Reprojects all bursts in scene to predominant UTM (if necessary)
+- Projects all bursts in scene to predominant UTM (if necessary)
 - Merges all bursts and saves mosaics
 - Deletes bursts
 
@@ -161,11 +188,3 @@ Run `flattening/papermill_flattening.py` to run all four notebooks on multiple R
    1. Open a terminal and run the following commands
    2. `conda activate opera_calval_rtc`
    3. `Python path/to/flattening/papermill_flattening.py`
-
-
----
----
-
-### 4) Radiometric Terrain Flattening Performance: Regression Analysis of Terrain Flattened Gamma Naught and Local Incidence Angle
-
-Work in progress
