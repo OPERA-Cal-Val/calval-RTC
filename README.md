@@ -16,7 +16,7 @@ If you are working locally:
   - Create the `opera_calval_rtc` conda environment using one of the `yaml` files in the `environments` directory
     - In a terminal, run:
       - `mamba env create -f path/to/calval-RTC/environment/jlab4_environment.yaml`
-        - Use `calval-RTC/environment/jlab3_environment.yaml` if you'd like Jupyter Lab~=3.0
+        - Use `calval-RTC/environment/jlab3_environment.yaml` if you'd like to use Jupyter Lab~=3.0 instead of Jupyter Lab~=4.0
   - Activate your environment and start Jupyter Lab. 
     - In a terminal run: 
       - `cd path/to/calval-RTC`
