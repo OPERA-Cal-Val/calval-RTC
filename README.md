@@ -14,7 +14,6 @@ If you are working locally:
   - Make sure you have conda/mamba installed
     - [Instructions to install miniforge (containing conda and mamba)](https://github.com/conda-forge/miniforge#mambaforge)
   - Create the `opera_calval_rtc` conda environment using one of the `yaml` files in the `environments` directory
-    - `environment/environment.yaml`
     - In a terminal, run:
       - `mamba env create -f path/to/calval-RTC/environment/jlab4_environment.yaml`
         - Use `calval-RTC/environment/jlab3_environment.yaml` if you'd like Jupyter Lab~=3.0
