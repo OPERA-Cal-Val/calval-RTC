@@ -43,7 +43,7 @@ If you are working in [OpenSARLab](https://opensarlab.asf.alaska.edu/):
 
 - Launch the `Bulk_Validation.ipynb` notebook.
 - Depending on where you run the notebook (locally, in OpenSARLab, or on another JupyterHub), you may need to select the kernel for the conda environment after launching the notebook
-  - Using the kernel selector at the top right of your notebook Jupyter Lab tab or the `Chang Kernel` option in the `Kernel` menu, select `opera_calval_rtc` 
+  - Using the kernel selector at the top right of your notebook Jupyter Lab tab or the `Change Kernel` option in the `Kernel` menu, select `opera_calval_rtc` 
 - Run the notebook 
   - The notebook will prompt you to select a validation module, validation site, and Sentinel-1 orbital path
     - It will download the needed data and perform validation on every available scene for a given module, site, and orbital path
