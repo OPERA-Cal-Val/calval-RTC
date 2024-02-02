@@ -1,9 +1,11 @@
 import argparse
 import contextlib
+from datetime import datetime
 import os
 import pandas as pd
 import papermill as pm
 from pathlib import Path
+import re
 import subprocess
 import sys
 from typing import Union
@@ -53,18 +55,48 @@ def download_mosaic_data(parent_data_dir, args):
         rtc_dir = parent_data_dir/f"OPERA_L2-RTC_{s}_30_v1.0"
         vv_burst_dir = rtc_dir/"vv_bursts"
         vh_burst_dir = rtc_dir/"vh_bursts"
+        
+        # collect acquisition date
+        date_regex = r"(?<=_)\d{8}T\d{6}(?=_\d{8}T\d{6})"
+        acquisition_time = re.search(date_regex, s)
+        try:
+            acquisition_time = acquisition_time.group(0)
+            acquisition_time = datetime.strptime(acquisition_time, '%Y%m%dT%H%M%S')
+        except AttributeError:
+            raise Exception(f"Acquisition timestamp not found in scene ID: {s}")      
+          
+        # limit scenes to those reported in Oct 2023
+        if args.site == 'Delta Junction':  
+            if args.orbital_path == 94:
+                start_time = datetime.strptime("20201209T032007", '%Y%m%dT%H%M%S')
+                end_time = datetime.strptime("20211216T032012", '%Y%m%dT%H%M%S')
+            elif args.orbital_path == 160:
+                start_time = datetime.strptime("20220507T161226", '%Y%m%dT%H%M%S')
+                end_time = datetime.strptime("20230713T161236", '%Y%m%dT%H%M%S')
+        else:
+                start_time = datetime.strptime("20210606T090048", '%Y%m%dT%H%M%S')
+                end_time = datetime.strptime("20220508T090052", '%Y%m%dT%H%M%S')
+        if not start_time <= acquisition_time <= end_time:
+            continue
+          
+        # create data directories                                         
         for pth in [rtc_dir, vv_burst_dir, vh_burst_dir]:
             pth.mkdir(exist_ok=True, parents=True)
-        
-
         
         # download bursts
         vv_urls = df.where(df.S1_Scene_IDs==s).dropna().vv_url.tolist()[0].split(' ')
         vh_urls = df.where(df.S1_Scene_IDs==s).dropna().vh_url.tolist()[0].split(' ')
         path_dict = {vv_burst_dir: vv_urls, vh_burst_dir: vh_urls}
+        print(f"Downloading bursts for S1 scene: {s}")
         for pth in path_dict:
             for burst in path_dict[pth]:
-                response = request.urlretrieve(burst, pth/burst.split('/')[-1])
+                try:
+                    print(f"Burst: {burst.split('/')[-1]}")
+                    response = request.urlretrieve(burst, pth/burst.split('/')[-1])
+                except urllib.error.HTTPError:
+                    print(f'Failed download: {burst}')
+                    # raise
+                    pass
                 
         vv_bursts = list(vv_burst_dir.glob('*VV.tif'))
         vh_bursts = list(vh_burst_dir.glob('*VH.tif'))
@@ -159,7 +191,7 @@ def coregistration(parent_data_dir, args):
 
 def main():
     args = parse_args()
-    parent_data_dir = Path.cwd().parents[1]/f"OPERA_RTC_Coregistration_{args.site.replace(' ', '_')}_{args.orbital_path}/input_OPERA_data"
+    parent_data_dir = Path.cwd().parents[1]/f"OPERA_L2-RTC_CalVal/OPERA_RTC_Coregistration_{args.site.replace(' ', '_')}_{args.orbital_path}/input_OPERA_data"
     if not args.skip_download:
         download_mosaic_data(parent_data_dir, args)
     coregistration(parent_data_dir, args)

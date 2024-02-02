@@ -1,5 +1,6 @@
 import argparse
 import contextlib
+from datetime import datetime
 import os
 import pandas as pd
 import papermill as pm
@@ -58,6 +59,26 @@ def download_mosaic_data(input_data_dir, args):
     
     
     for scene_id in df_rtc.S1_Scene_IDs:
+        
+        # limit scenes to those reported in Oct 2023
+        if args.site == 'Delta Junction':        
+            date_regex = r"(?<=_)\d{8}T\d{6}(?=_\d{8}T\d{6})"
+            acquisition_time = re.search(date_regex, scene_id)
+            try:
+                acquisition_time = acquisition_time.group(0)
+                acquisition_time = datetime.strptime(acquisition_time, '%Y%m%dT%H%M%S')
+            except AttributeError:
+                raise Exception(f"Acquisition timestamp not found in scene ID: {scene_id}")
+            
+            if args.orbital_path == 94:
+                start_time = datetime.strptime("20201209T032007", '%Y%m%dT%H%M%S')
+                end_time = datetime.strptime("20211216T032012", '%Y%m%dT%H%M%S')
+            elif args.orbital_path == 160:
+                start_time = datetime.strptime("20220507T161226", '%Y%m%dT%H%M%S')
+                end_time = datetime.strptime("20230713T161236", '%Y%m%dT%H%M%S')
+            if not start_time <= acquisition_time <= end_time:
+                continue  
+            
         # define/create paths to data dirs
         rtc_dir = input_data_dir/f"OPERA_L2-RTC_{scene_id}_30_v1.0"
         vv_burst_dir = rtc_dir/"vv_bursts"
@@ -65,6 +86,7 @@ def download_mosaic_data(input_data_dir, args):
         inc_angle_burst_dir = rtc_dir/"ellipsoidal_inc_angle_bursts"
         local_inc_angle_burst_dir = rtc_dir/"local_inc_angle_bursts"
         mask_burst_dir = rtc_dir/"layover_shadow_bursts"
+        
         for pth in [rtc_dir, vv_burst_dir, vh_burst_dir, inc_angle_burst_dir, 
                     local_inc_angle_burst_dir, mask_burst_dir]:
             pth.mkdir(exist_ok=True, parents=True)
@@ -98,14 +120,17 @@ def download_mosaic_data(input_data_dir, args):
                 raise Exception(f"Found {len(scene_burst_dict[ds])} {ds} bursts, but there were {burst_count} vh bursts.")
 
         # download bursts
+        print(f"Downloading bursts for S1 scene: {scene_id}")
         for pth in scene_burst_dict:
             for burst in scene_burst_dict[pth]:
                 if not (pth/burst.split('/')[-1]).exists():
                     try:
+                        print(f"Burst: {burst.split('/')[-1]}")
                         response = request.urlretrieve(burst, pth/burst.split('/')[-1])
                     except urllib.error.HTTPError:
-                        print(burst)
-                        raise
+                        print(f'Failed download: {burst}')
+                        # raise
+                        pass
 
         # Collect paths to downloaded bursts
         vv_bursts = list(vv_burst_dir.glob('*VV.tif'))
@@ -263,7 +288,7 @@ def flatten(input_data_dir):
 
 def main():
     args = parse_args()
-    parent_data_dir = Path.cwd().parents[1]/f"OPERA_RTC_Flattening_{args.site.replace(' ', '_')}_{args.orbital_path}"
+    parent_data_dir = Path.cwd().parents[1]/f"OPERA_L2-RTC_CalVal/OPERA_RTC_Flattening_{args.site.replace(' ', '_')}_{args.orbital_path}"
     input_data_dir = parent_data_dir/"input_OPERA_data"
     input_data_dir.mkdir(parents=True, exist_ok=True)
     if not args.skip_download:

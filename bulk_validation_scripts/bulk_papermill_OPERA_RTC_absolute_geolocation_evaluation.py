@@ -22,8 +22,8 @@ import util.geo as util
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--site', type=str, required=True, help='California, Oklahoma')
-    parser.add_argument('--orbital_path', type=int, required=True, help='34, 64, 107')
+    parser.add_argument('--site', type=str, required=True, help='California')
+    parser.add_argument('--orbital_path', type=int, required=True, help='64')
     parser.add_argument('--skip_download', default=False, action='store_true',
                         help="Skip downloading and mosaicking of bursts and validate previously prepared data.")
     return parser.parse_args()
@@ -52,10 +52,17 @@ def download_mosaic_data(parent_data_dir, args):
         vv_burst_dir = rtc_dir/"vv_bursts"
         vv_burst_dir.mkdir(exist_ok=True, parents=True)
 
-        # download burst
+        # download bursts
         vv_urls = df.where(df.S1_Scene_IDs==s).dropna().vv_url.tolist()[0].split(' ')
+        print(f"Downloading bursts for S1 scene: {s}")
         for burst in vv_urls:
-            response = request.urlretrieve(burst, vv_burst_dir/burst.split('/')[-1])
+            try:
+                print(f"Burst: {burst.split('/')[-1]}")
+                response = request.urlretrieve(burst, vv_burst_dir/burst.split('/')[-1])
+            except urllib.error.HTTPError:
+                print(f'Failed download: {burst}')
+                # raise
+                pass
 
         vv_bursts = list(vv_burst_dir.glob('*VV.tif'))
         epsgs = util.get_projection_counts(vv_bursts)
@@ -123,7 +130,7 @@ def absolute_geolocation_evaluation(parent_data_dir, args):
 
 def main():
     args = parse_args()
-    parent_data_dir = Path.cwd().parents[1]/f"OPERA_RTC_ALE_{args.site}_{args.orbital_path}/input_OPERA_data"
+    parent_data_dir = Path.cwd().parents[1]/f"OPERA_L2-RTC_CalVal/OPERA_RTC_ALE_{args.site}_{args.orbital_path}/input_OPERA_data"
     if not args.skip_download:
         download_mosaic_data(parent_data_dir, args)
     absolute_geolocation_evaluation(parent_data_dir, args)
