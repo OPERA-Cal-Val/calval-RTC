@@ -48,7 +48,7 @@ If you are working in [OpenSARLab](https://opensarlab.asf.alaska.edu/):
 - Run the notebook 
   - The notebook will prompt you to select a validation module, validation site, and Sentinel-1 orbital path
     - It will download the needed data and perform validation on every available scene for a given module, site, and orbital path
-    - All output will be stored in appropriately named directories alongside this repository  
+    - All output will be stored at the path: `../OPERA_L2-RTC_CalVal`  
 
 ---
 ---
