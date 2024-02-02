@@ -21,6 +21,7 @@ If you are working locally:
     - In a terminal run: 
       - `cd path/to/calval-RTC`
       - `conda activate opera_calval_rtc`
+      - `python -m ipykernel install --user --name opera_calval_rtc`
       - `jupyter lab`
 
 If you are working in [OpenSARLab](https://opensarlab.asf.alaska.edu/):
@@ -34,8 +35,8 @@ If you are working in [OpenSARLab](https://opensarlab.asf.alaska.edu/):
 - In a terminal, run:
   - `cd path/to/calval-RTC`
   - `conda activate opera_calval_rtc`
-  - `jupyter lab`
   - `python -m ipykernel install --user --name opera_calval_rtc`
+  - `jupyter lab`
 
 ---
 ---
