@@ -3,17 +3,18 @@ import os
 import pandas as pd
 import papermill as pm
 from pathlib import Path
+import requests
 import subprocess
 import sys
 from typing import Union
 from tqdm.auto import tqdm
-from urllib import request
 from zipfile import ZipFile
 
 from osgeo import gdal
 gdal.UseExceptions()
 
 from opensarlab_lib import work_dir
+import asf_search
 
 current = Path('..').resolve()
 sys.path.append(str(current))
@@ -24,6 +25,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--site', type=str, required=True, help='California')
     parser.add_argument('--orbital_path', type=int, required=True, help='64')
+    parser.add_argument('--EDL_token', type=str, required=True, help="EDL Bearer Token")
     parser.add_argument('--skip_download', default=False, action='store_true',
                         help="Skip downloading and mosaicking of bursts and validate previously prepared data.")
     return parser.parse_args()
@@ -45,24 +47,34 @@ def download_mosaic_data(parent_data_dir, args):
                   (df.CalVal_Module == calval_module)).dropna()
     
     scenes = list(df.S1_Scene_IDs)
+
+    print(len(scenes))
+    
     for s in tqdm(scenes):
         # define/create paths to data dirs
         rtc_dir = parent_data_dir/f"OPERA_L2-RTC_{s}_30_v1.0"
+        output = rtc_dir/f"OPERA_L2_RTC-S1_VV_{s}_30_v1.0_mosaic.tif"
+        if output.exists():
+            continue
+        
         rtc_dir.mkdir(exist_ok=True, parents=True)
+        
         vv_burst_dir = rtc_dir/"vv_bursts"
         vv_burst_dir.mkdir(exist_ok=True, parents=True)
 
         # download bursts
         vv_urls = df.where(df.S1_Scene_IDs==s).dropna().vv_url.tolist()[0].split(' ')
         print(f"Downloading bursts for S1 scene: {s}")
-        for burst in vv_urls:
-            try:
-                print(f"Burst: {burst.split('/')[-1]}")
-                response = request.urlretrieve(burst, vv_burst_dir/burst.split('/')[-1])
-            except urllib.error.HTTPError:
-                print(f'Failed download: {burst}')
-                # raise
-                pass
+        print(vv_burst_dir)
+        print(len(vv_urls))
+        
+        asf_search.download_urls(urls=vv_urls, path=vv_burst_dir, session=asf_search.ASFSession().auth_with_token(args.EDL_token))
+        # for burst_url in vv_urls:
+        #     try:
+        #         print(f"Burst URL: {burst_url}")
+        #         asf_search.download_url(url=burst_url, path=vv_burst_dir, session=asf_search.ASFSession().auth_with_token(args.EDL_token))
+        #     except requests.exceptions.MissingSchema:
+        #         print(f"MISSING SCHEMA: {burst_url}")
 
         vv_bursts = list(vv_burst_dir.glob('*VV.tif'))
         epsgs = util.get_projection_counts(vv_bursts)
@@ -94,7 +106,7 @@ def download_mosaic_data(parent_data_dir, args):
 
         # merge bursts
         no_data_val = util.get_no_data_val(vv_bursts[0])
-        output = rtc_dir/f"OPERA_L2_RTC-S1_VV_{s}_30_v1.0_mosaic.tif"
+        # output = rtc_dir/f"OPERA_L2_RTC-S1_VV_{s}_30_v1.0_mosaic.tif"
         merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {output} {merge_str}"
         print(f"Merging bursts -> {output}")
         subprocess.run([merge_command], shell=True) 
