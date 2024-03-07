@@ -1,7 +1,8 @@
 from typing import List
 
+
 def legend_template(color: List[str], value: List[str]) -> str:
-    
+
     fields = ""
     for i, c in enumerate(color):
         fields = f"{fields}\n<li><span style='border:3px solid #3388ff;background: {c};'></span>{value[i]}"
