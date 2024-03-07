@@ -6,113 +6,72 @@ from pathlib import Path
 import requests
 import subprocess
 import sys
-from typing import Union
+from typing import Union, List
 from tqdm.auto import tqdm
-from zipfile import ZipFile
+from urllib.parse import urlparse
 
 from osgeo import gdal
 gdal.UseExceptions()
 
+import earthaccess
 from opensarlab_lib import work_dir
-import asf_search
 
 current = Path('..').resolve()
 sys.path.append(str(current))
 import util.geo as util
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--site', type=str, required=True, help='California')
     parser.add_argument('--orbital_path', type=int, required=True, help='64')
-    parser.add_argument('--EDL_token', type=str, required=True, help="EDL Bearer Token")
     parser.add_argument('--skip_download', default=False, action='store_true',
                         help="Skip downloading and mosaicking of bursts and validate previously prepared data.")
     return parser.parse_args()
 
 
-def download_mosaic_data(parent_data_dir, args):
+def get_scene_df() -> pd.DataFrame:
     # unzip linked_data.csv
     zip_path = Path.cwd().parent/"linking-data/opera_rtc_table.csv.zip"
     linked_data_csv = Path.cwd().parent/'linking-data/opera_rtc_table.csv'
-    if not linked_data_csv.exists():
-        with ZipFile(zip_path, 'r') as zObject: 
-            zObject.extractall(path=zip_path.parent)
     
     # load burst urls for site/calval module
     calval_module = 'Absolute Geolocation Evaluation'
     df = pd.read_csv(linked_data_csv)
-    df = df.where((df.Site == "California") & 
-                  (df.Orbital_Path == 64) & 
-                  (df.CalVal_Module == calval_module)).dropna()
-    
-    scenes = list(df.S1_Scene_IDs)
+    return df.where((df.Site == "California") & 
+                    (df.Orbital_Path == 64) & 
+                    (df.CalVal_Module == calval_module)).dropna()
 
-    print(len(scenes))
-    
-    for s in tqdm(scenes):
-        # define/create paths to data dirs
-        rtc_dir = parent_data_dir/f"OPERA_L2-RTC_{s}_30_v1.0"
-        output = rtc_dir/f"OPERA_L2_RTC-S1_VV_{s}_30_v1.0_mosaic.tif"
-        if output.exists():
-            continue
-        
-        rtc_dir.mkdir(exist_ok=True, parents=True)
-        
-        vv_burst_dir = rtc_dir/"vv_bursts"
-        vv_burst_dir.mkdir(exist_ok=True, parents=True)
 
-        # download bursts
-        vv_urls = df.where(df.S1_Scene_IDs==s).dropna().vv_url.tolist()[0].split(' ')
-        print(f"Downloading bursts for S1 scene: {s}")
-        print(vv_burst_dir)
-        print(len(vv_urls))
-        
-        asf_search.download_urls(urls=vv_urls, path=vv_burst_dir, session=asf_search.ASFSession().auth_with_token(args.EDL_token))
-        # for burst_url in vv_urls:
-        #     try:
-        #         print(f"Burst URL: {burst_url}")
-        #         asf_search.download_url(url=burst_url, path=vv_burst_dir, session=asf_search.ASFSession().auth_with_token(args.EDL_token))
-        #     except requests.exceptions.MissingSchema:
-        #         print(f"MISSING SCHEMA: {burst_url}")
+def is_valid_url(url: str) -> bool:
+    try:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except AttributeError:
+        return False
 
-        vv_bursts = list(vv_burst_dir.glob('*VV.tif'))
-        epsgs = util.get_projection_counts(vv_bursts)
-        predominant_epsg = None if len(epsgs) == 1 else max(epsgs, key=epsgs.get)
 
-        if predominant_epsg:
-            # project bursts to predominant UTM, when necessary
-            for pth in vv_bursts:
-                src_SRS = util.get_projection(str(pth))
-                if src_SRS != predominant_epsg:
-                    res = util.get_res(pth)
-                    no_data_val = util.get_no_data_val(pth)
-                    temp = pth.parent/f"temp_{pth.stem}.tif"
-                    pth.rename(temp)
+def download_bursts(scene_id: str, df: pd.DataFrame, rtc_dir: os.PathLike) -> List[os.PathLike]:
+    # Create data directories
+    vv_burst_dir = rtc_dir/"vv_bursts"
+    vv_burst_dir.mkdir(exist_ok=True, parents=True)
 
-                    warp_options = {
-                        "dstSRS":f"EPSG:{predominant_epsg}", "srcSRS":f"EPSG:{src_SRS}",
-                        "targetAlignedPixels":True,
-                        "xRes":res, "yRes":res,
-                        "dstNodata": no_data_val
-                    }
-                    gdal.Warp(str(pth), str(temp), **warp_options)
-                    temp.unlink()
+    # Find VV URLs for scene_id
+    vv_urls = df.where(df.S1_Scene_IDs==scene_id).dropna().vv_url.tolist()[0].split(' ')
 
-        # build a string of bursts to merge
-        merge_str = ''
-        for pth in vv_bursts:
-            merge_str = f"{merge_str} {str(pth)}"
+    # sanitize URLs
+    vv_urls = [url for url in vv_urls if is_valid_url(url)]
 
-        # merge bursts
-        no_data_val = util.get_no_data_val(vv_bursts[0])
-        # output = rtc_dir/f"OPERA_L2_RTC-S1_VV_{s}_30_v1.0_mosaic.tif"
-        merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {output} {merge_str}"
-        print(f"Merging bursts -> {output}")
-        subprocess.run([merge_command], shell=True) 
+    # download bursts
+    print(f"Downloading bursts for S1 scene: {scene_id}")
+    for burst_url in vv_urls:
+        earthaccess.download(burst_url, vv_burst_dir)
+
+    # return paths to downloaded bursts
+    return list(vv_burst_dir.glob('*VV.tif'))
         
         
-def absolute_geolocation_evaluation(parent_data_dir, args):
+def absolute_geolocation_evaluation(parent_data_dir: os.PathLike, args: object):
     data_dirs = [p for p in parent_data_dir.glob('*') if not str(p.name).startswith('.')]
 
     output_dirs = [p.parents[1]/f"output_OPERA_RTC_ALE_{args.site}_{args.orbital_path}/absolute_geolocation_evaluation_{p.name.split('RTC_')[1]}" 
@@ -144,7 +103,30 @@ def main():
     args = parse_args()
     parent_data_dir = Path.cwd().parents[1]/f"OPERA_L2-RTC_CalVal/OPERA_RTC_ALE_{args.site}_{args.orbital_path}/input_OPERA_data"
     if not args.skip_download:
-        download_mosaic_data(parent_data_dir, args)
+        # collect CalVal data access info
+        df = get_scene_df()
+        scenes = list(df.S1_Scene_IDs)
+
+        # download CalVal bursts and mosaic into full S1 scenes
+        earthaccess.login()
+        for scene_id in tqdm(scenes):
+            rtc_dir = parent_data_dir/f"OPERA_L2-RTC_{scene_id}_30_v1.0"
+            rtc_dir.mkdir(exist_ok=True, parents=True)
+            output = rtc_dir/f"OPERA_L2_RTC-S1_VV_{scene_id}_30_v1.0_mosaic.tif"
+            if output.exists():
+                continue
+            vv_bursts = download_bursts(scene_id, df, rtc_dir)
+
+            # reproject all bursts to predominant CRS
+            epsgs = util.get_projection_counts(vv_bursts)
+            predominant_epsg = None if len(epsgs) == 1 else max(epsgs, key=epsgs.get)
+            if predominant_epsg:
+                for pth in vv_bursts:
+                    util.reproject_data(pth, predominant_epsg)
+
+            # merge bursts into a single scene
+            util.merge_bursts(scene_id, vv_bursts, output)
+
     absolute_geolocation_evaluation(parent_data_dir, args)
 
     

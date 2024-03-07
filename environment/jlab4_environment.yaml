@@ -8,6 +8,7 @@ dependencies:
   - boto3
   - dask
   - distributed
+  - earthaccess>=0.9.0
   - folium
   - gdal  
   - geopandas
@@ -21,7 +22,7 @@ dependencies:
   - lmfit
   - matplotlib<3.7.0
   - mgrs
-  - numpy
+  - numpy 
   - opensarlab_lib
   - pandas
   - papermill
@@ -32,6 +33,7 @@ dependencies:
   - rioxarray
   - scikit-image
   - scipy
-  - shapely
   - pip
   - wget
+  - pip:
+    - shapely

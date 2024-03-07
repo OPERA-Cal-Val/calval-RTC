@@ -1,6 +1,8 @@
 from collections import Counter
+import os
 from pathlib import Path
 import re
+import subprocess
 from typing import List, Union, Dict
 
 import numpy as np
@@ -40,7 +42,8 @@ def get_corner_coords(img_path: Union[Path, str]) -> Union[List[str], None]:
         return [info['cornerCoordinates']['upperLeft'], info['cornerCoordinates']['lowerRight']]
     except KeyError:
         return None
-    
+
+
 def get_projection(img_path: Union[Path, str]) -> Union[str, None]:
     """
     Takes: a string or posix path to a product in a UTM projection
@@ -61,11 +64,35 @@ def get_projection(img_path: Union[Path, str]) -> Union[str, None]:
         return results.group(0).split(',')[1][:-2]
     else:
         return None
-    
-    
-def get_projection_counts(tiff_paths: List[Union[Path, str]]) -> Dict:
+
+
+def reproject_data(pth: Union[str, os.PathLike], predominant_epsg: str):
     """
-    Takes: List of string or posix paths to geotiffs
+    pth: a path to a GeoTiff
+    predominant_epsg: a string epsg
+
+    Checks EPSG of input pth and projects to predominant_epsg if necessary
+    """
+    src_SRS = get_projection(str(pth))
+    if src_SRS != predominant_epsg:
+        res = get_res(pth)
+        no_data_val = get_no_data_val(pth)
+        temp = pth.parent/f"temp_{pth.stem}.tif"
+        pth.rename(temp)
+
+        warp_options = {
+            "dstSRS":f"EPSG:{predominant_epsg}", "srcSRS":f"EPSG:{src_SRS}",
+            "targetAlignedPixels":True,
+            "xRes":res, "yRes":res,
+            "dstNodata": no_data_val
+        }
+        gdal.Warp(str(pth), str(temp), **warp_options)
+        temp.unlink()
+
+
+def get_projection_counts(tiff_paths: List[Union[os.PathLike, str]]) -> Dict:
+    """
+    Takes: List of string or os.PathLike paths to geotiffs
     
     Returns: Dictionary key: epsg, value: number of tiffs in that epsg 
     """
@@ -75,8 +102,14 @@ def get_projection_counts(tiff_paths: List[Union[Path, str]]) -> Dict:
 
     epsgs = dict(Counter(epsgs))
     return epsgs
-    
-def poly_from_minx_miny_maxx_maxy(coords):
+
+
+def poly_from_minx_miny_maxx_maxy(coords: List[Union[float, int]]) -> shapely.geometry.polygon.Polygon:
+    """
+    Takes: List of bounding box coordinates in format [minx, miny, maxx, maxy]
+
+    Returns: shapely Polygon of bounding box
+    """
     return shapely.wkt.loads((f"POLYGON(({coords[0]} {coords[1]}, "
                               f"{coords[0]} {coords[3]}, "
                               f"{coords[2]} {coords[3]}, "
@@ -84,13 +117,44 @@ def poly_from_minx_miny_maxx_maxy(coords):
                               f"{coords[0]} {coords[1]}))"))
     
 
-def get_res(tiff):
-    tiff = str(tiff)
-    f =  gdal.Open(tiff)
+def get_res(tif_pth: Union[os.PathLike, str]) -> float:
+    """
+    Takes: path to a GeoTiff
+
+    Returns: Geotiff resolution
+    """
+    f =  gdal.Open(str(tif_pth))
     return f.GetGeoTransform()[1] 
 
 
-def get_no_data_val(pth):
-    pth = str(pth)
-    f = gdal.Open(str(pth))
+def get_no_data_val(tif_pth: Union[os.PathLike, str]) -> Union[np.nan, float, int]:
+    """
+    Takes: path to a GeoTiff
+
+    Returns: GeoTiff's no-data value or numpy.nan if not defined
+    """
+    
+    f = gdal.Open(str(tif_pth))
     return np.nan if not f.GetRasterBand(1).GetNoDataValue() else f.GetRasterBand(1).GetNoDataValue()
+
+
+def merge_bursts(scene_id: str, burst_paths: List[Union[str, os.PathLike]], output: Union[str, os.PathLike]):
+    """
+    Takes:
+        scene_id: Sentinel-1 scene ID
+        burst_paths: List of paths to bursts to be merged
+        output: output path of merged GeoTiff
+
+    Merges all bursts in `burst_paths`, saving to path `output`
+    """
+    
+    # build a string of bursts to merge
+    merge_str = ''
+    for pth in burst_paths:
+        merge_str += f" {str(pth)}"
+
+    # merge bursts
+    no_data_val = get_no_data_val(burst_paths[0])
+    merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {output} {merge_str}"
+    print(f"Merging bursts -> {output}")
+    subprocess.run([merge_command], shell=True) 

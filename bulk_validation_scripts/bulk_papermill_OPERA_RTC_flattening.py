@@ -1,5 +1,4 @@
 import argparse
-import contextlib
 from datetime import datetime
 import os
 import pandas as pd
@@ -8,15 +7,14 @@ from pathlib import Path
 import re
 import subprocess
 import sys
-from typing import Union
+from typing import Union, Dict, List
 from tqdm.auto import tqdm
-from urllib import request
-import urllib.error
-from zipfile import ZipFile
+from urllib.parse import urlparse
 
 from osgeo import gdal
 gdal.UseExceptions()
 
+import earthaccess
 from opensarlab_lib import work_dir
 
 current = Path('..').resolve()
@@ -24,7 +22,7 @@ sys.path.append(str(current))
 import util.geo as util
 
 
-def parse_args():
+def parse_args()-> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--site', type=str, required=True, help='Vermont, Delta Junction, Brazil')
     parser.add_argument('--orbital_path', type=int, required=True, help='135, 113, 94, 160, 39')
@@ -33,34 +31,25 @@ def parse_args():
     return parser.parse_args()
 
 
-def download_mosaic_data(input_data_dir, args):
-
-    
+def get_rtc_df(args: object) -> pd.DataFrame:
     opera_rtc_csv_zip_path = Path.cwd().parent/"linking-data/opera_rtc_table.csv.zip"
     opera_rtc_csv = Path.cwd().parent/'linking-data/opera_rtc_table.csv'
-    if not opera_rtc_csv.exists():
-        with ZipFile(opera_rtc_csv_zip_path, 'r') as zObject: 
-            zObject.extractall(path=opera_rtc_csv_zip_path.parent)
 
     # load dataframe with burst urls for site/calval module
     calval_module = 'Flattening'
     df_rtc = pd.read_csv(opera_rtc_csv)
-    df_rtc = df_rtc.where((df_rtc.Site == args.site) & 
-                  (df_rtc.Orbital_Path == args.orbital_path) & 
-                  (df_rtc.CalVal_Module == calval_module)).dropna()
-    
+    return df_rtc.where((df_rtc.Site == args.site) &
+                        (df_rtc.Orbital_Path == args.orbital_path) & 
+                        (df_rtc.CalVal_Module == calval_module)).dropna()
+
+def get_static_df() -> pd.DataFrame:
     # load dataframe with static file URLs by burst ID
     opera_static_csv_zip_path = Path.cwd().parent/"linking-data/opera_rtc_static_table.csv.zip"
     opera_static_csv = Path.cwd().parent/'linking-data/opera_rtc_static_table.csv'    
-    if not opera_static_csv.exists():
-        with ZipFile(opera_static_csv_zip_path, 'r') as zObject: 
-            zObject.extractall(path=opera_static_csv_zip_path.parent) 
-    df_static = pd.read_csv(opera_static_csv)      
-    
-    
-    for scene_id in df_rtc.S1_Scene_IDs:
-        
-        # limit scenes to those reported in Oct 2023
+    return pd.read_csv(opera_static_csv) 
+
+def was_reported(acquisition_time: datetime, args: object) -> bool:
+        # limit scenes to those reported in Oct 2023 flattening validation
         if args.site == 'Delta Junction':        
             date_regex = r"(?<=_)\d{8}T\d{6}(?=_\d{8}T\d{6})"
             acquisition_time = re.search(date_regex, scene_id)
@@ -76,28 +65,20 @@ def download_mosaic_data(input_data_dir, args):
             elif args.orbital_path == 160:
                 start_time = datetime.strptime("20220507T161226", '%Y%m%dT%H%M%S')
                 end_time = datetime.strptime("20230713T161236", '%Y%m%dT%H%M%S')
-            if not start_time <= acquisition_time <= end_time:
-                continue  
-            
-        # define/create paths to data dirs
-        rtc_dir = input_data_dir/f"OPERA_L2-RTC_{scene_id}_30_v1.0"
-        vv_burst_dir = rtc_dir/"vv_bursts"
-        vh_burst_dir = rtc_dir/"vh_bursts"
-        inc_angle_burst_dir = rtc_dir/"ellipsoidal_inc_angle_bursts"
-        local_inc_angle_burst_dir = rtc_dir/"local_inc_angle_bursts"
-        mask_burst_dir = rtc_dir/"layover_shadow_bursts"
-        
-        for pth in [rtc_dir, vv_burst_dir, vh_burst_dir, inc_angle_burst_dir, 
-                    local_inc_angle_burst_dir, mask_burst_dir]:
-            pth.mkdir(exist_ok=True, parents=True)
+            return start_time <= acquisition_time <= end_time
 
+def build_url_dict(df_rtc: pd.DataFrame, df_static: pd.DataFrame, dirs, scene_id: str):
         scene_burst_dict = {
-            vh_burst_dir: df_rtc.where(df_rtc.S1_Scene_IDs==scene_id).dropna().vh_url.tolist()[0].split(' '),
-            vv_burst_dir: df_rtc.where(df_rtc.S1_Scene_IDs==scene_id).dropna().vv_url.tolist()[0].split(' '),
-            mask_burst_dir: [],
-            inc_angle_burst_dir: [],
-            local_inc_angle_burst_dir: []
+        dirs["vh_burst_dir"]: df_rtc.where(df_rtc.S1_Scene_IDs==scene_id).dropna().vh_url.tolist()[0].split(' '),
+        dirs["vv_burst_dir"]: df_rtc.where(df_rtc.S1_Scene_IDs==scene_id).dropna().vv_url.tolist()[0].split(' '),
+        dirs["mask_burst_dir"]: [],
+        dirs["inc_angle_burst_dir"]: [],
+        dirs["local_inc_angle_burst_dir"]: []
         }
+
+        # sanitize RTC URLs
+        scene_burst_dict[dirs["vh_burst_dir"]] = [url for url in scene_burst_dict[dirs["vh_burst_dir"]] if is_valid_url(url)]
+        scene_burst_dict[dirs["vh_burst_dir"]] = [url for url in scene_burst_dict[dirs["vh_burst_dir"]] if is_valid_url(url)]
 
         # Get burst IDs
         opera_ids = list(df_rtc.where(df_rtc.S1_Scene_IDs == scene_id).dropna().opera_rtc_ids)[0]
@@ -107,113 +88,95 @@ def download_mosaic_data(input_data_dir, args):
         for burst in burst_ids:
             df_burst_static = df_static.where(df_static.burst_id == burst).dropna()
             static_url_list = df_burst_static.product_urls.iloc[0].split(' ')
+
+            # sanitize static URLs
+            static_url_list = [url for url in static_url_list if is_valid_url(url)]
             for url in static_url_list:
                 if "v1.0_mask.tif" in url:
-                    scene_burst_dict[mask_burst_dir].append(url)
+                    scene_burst_dict[dirs["mask_burst_dir"]].append(url)
                 elif "v1.0_incidence_angle.tif" in url:
-                    scene_burst_dict[inc_angle_burst_dir].append(url)
+                    scene_burst_dict[dirs["inc_angle_burst_dir"]].append(url)
                 elif "v1.0_local_incidence_angle.tif" in url:
-                    scene_burst_dict[local_inc_angle_burst_dir].append(url)
-        burst_count = len(scene_burst_dict[vh_burst_dir])
+                    scene_burst_dict[dirs["local_inc_angle_burst_dir"]].append(url)
+        burst_count = len(scene_burst_dict[dirs["vh_burst_dir"]])
         for ds in scene_burst_dict:
             if len(scene_burst_dict[ds]) != burst_count:
                 raise Exception(f"Found {len(scene_burst_dict[ds])} {ds} bursts, but there were {burst_count} vh bursts.")
+        return scene_burst_dict
 
-        # download bursts
-        print(f"Downloading bursts for S1 scene: {scene_id}")
-        for pth in scene_burst_dict:
-            for burst in scene_burst_dict[pth]:
-                if not (pth/burst.split('/')[-1]).exists():
-                    try:
-                        print(f"Burst: {burst.split('/')[-1]}")
-                        response = request.urlretrieve(burst, pth/burst.split('/')[-1])
-                    except urllib.error.HTTPError:
-                        print(f'Failed download: {burst}')
-                        # raise
-                        pass
+def is_valid_url(url: str) -> bool:
+    try:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except AttributeError:
+        return False
 
-        # Collect paths to downloaded bursts
-        vv_bursts = list(vv_burst_dir.glob('*VV.tif'))
-        vh_bursts = list(vh_burst_dir.glob('*VH.tif'))
-        mask_bursts = list(mask_burst_dir.glob('*mask.tif'))
-        local_inc_angle_bursts = list(local_inc_angle_burst_dir.glob('*local_incidence_angle.tif'))
-        inc_angle_bursts = list(inc_angle_burst_dir.glob('*incidence_angle.tif'))
+def download_bursts_and_static(scene_burst_dict: dict):
+    for pth, urls in scene_burst_dict.items():
+        for url in urls:
+            local_pth = pth/url.split('/')[-1]
+            if not local_pth.exists():
+                earthaccess.download(url, pth)
 
-        epsgs = util.get_projection_counts(vv_bursts)
-        predominant_epsg = None if len(epsgs) == 1 else max(epsgs, key=epsgs.get)
+def merge_bursts(burst_pth_dict: Dict[str, List[str]], predominant_epsg: str, rtc_dir: os.PathLike, scene_id: str):
+    vv_merge_str = ''
+    vh_merge_str = ''
+    mask_merge_str = ''
+    local_inc_angle_merge_str = ''
+    inc_angle_merge_str = ''
 
-        vv_merge_str = ''
-        vh_merge_str = ''
-        mask_merge_str = ''
-        local_inc_angle_merge_str = ''
-        inc_angle_merge_str = ''
-        for bursts in [vv_bursts, vh_bursts, mask_bursts, local_inc_angle_bursts, inc_angle_bursts]:
-            for pth in bursts:
-                #build merge strings
-                if 'VV.tif' in str(pth):
-                    vv_merge_str = f"{vv_merge_str} {str(pth)}" 
-                elif 'VH.tif' in str(pth):
-                    vh_merge_str = f"{vh_merge_str} {str(pth)}"
-                elif 'mask.tif' in str(pth):
-                    mask_merge_str = f"{mask_merge_str} {str(pth)}"
-                elif 'incidence_angle.tif' in str(pth):
-                    if 'local' in str(pth):
-                        local_inc_angle_merge_str = f"{local_inc_angle_merge_str} {str(pth)}"
-                    else:
-                        inc_angle_merge_str = f"{inc_angle_merge_str} {str(pth)}"
+    for data_type, pths in burst_pth_dict.items():
+        for pth in pths:
+            #build merge strings
+            if data_type == "vv_bursts":
+                vv_merge_str = f"{vv_merge_str} {str(pth)}" 
+            elif data_type == "vh_bursts":
+                vh_merge_str = f"{vh_merge_str} {str(pth)}"
+            elif data_type == "mask_bursts":
+                mask_merge_str = f"{mask_merge_str} {str(pth)}"
+            elif data_type == "local_inc_angle_bursts":
+                local_inc_angle_merge_str = f"{local_inc_angle_merge_str} {str(pth)}"
+            elif data_type == "inc_angle_bursts":
+                inc_angle_merge_str = f"{inc_angle_merge_str} {str(pth)}"
+                
+            # project to predominant UTM (when necessary)
+            if predominant_epsg:
+                util.reproject_data(pth, predominant_epsg)
 
-                # project to predominant UTM (when necessary)
-                if predominant_epsg:
-                    print(pth)
-                    src_SRS = util.get_projection(str(pth))
-                    if src_SRS != predominant_epsg:
-                        res = util.get_res(pth)
-                        no_data_val = util.get_no_data_val(pth)
-                        temp = pth.parent/f"temp_{pth.stem}.tif"
-                        pth.rename(temp)
 
-                        warp_options = {
-                            "dstSRS":f"EPSG:{predominant_epsg}", "srcSRS":f"EPSG:{src_SRS}",
-                            "targetAlignedPixels":True,
-                            "xRes":res, "yRes":res,
-                            "dstNodata": no_data_val
-                        }
-                        gdal.Warp(str(pth), str(temp), **warp_options)
-                        temp.unlink()
+    no_data_val = util.get_no_data_val(burst_pth_dict["vv_bursts"][0])
+    # merge vv bursts
+    vv_output = rtc_dir/f"OPERA_L2_RTC-S1_VV_{scene_id}_30_v1.0_mosaic.tif"
+    vv_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {vv_output} {vv_merge_str}"
+    print(f"Merging bursts -> {vv_output}")
+    subprocess.run([vv_merge_command], shell=True)  
 
-        no_data_val = util.get_no_data_val(vv_bursts[0])
-        # merge vv bursts
-        vv_output = rtc_dir/f"OPERA_L2_RTC-S1_VV_{scene_id}_30_v1.0_mosaic.tif"
-        vv_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {vv_output} {vv_merge_str}"
-        print(f"Merging bursts -> {vv_output}")
-        subprocess.run([vv_merge_command], shell=True)  
+    # merge vh bursts
+    vh_output = rtc_dir/f"OPERA_L2_RTC-S1_VH_{scene_id}_30_v1.0_mosaic.tif"
+    vh_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {vh_output} {vh_merge_str}"
+    print(f"Merging bursts -> {vh_output}")
+    subprocess.run([vh_merge_command], shell=True)      
 
-        # merge vh bursts
-        vh_output = rtc_dir/f"OPERA_L2_RTC-S1_VH_{scene_id}_30_v1.0_mosaic.tif"
-        vh_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {vh_output} {vh_merge_str}"
-        print(f"Merging bursts -> {vh_output}")
-        subprocess.run([vh_merge_command], shell=True)      
+    # merge layover/shadow mask bursts
+    mask_output = rtc_dir/f"OPERA_L2_RTC-S1_mask_{scene_id}_30_v1.0_mosaic.tif"
+    mask_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {mask_output} {mask_merge_str}"
+    print(f"Merging bursts -> {mask_output}")
+    subprocess.run([mask_merge_command], shell=True) 
 
-        # merge layover/shadow mask bursts
-        mask_output = rtc_dir/f"OPERA_L2_RTC-S1_mask_{scene_id}_30_v1.0_mosaic.tif"
-        mask_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {mask_output} {mask_merge_str}"
-        print(f"Merging bursts -> {mask_output}")
-        subprocess.run([mask_merge_command], shell=True) 
+    # merge local incidence angle bursts
+    local_inc_angle_output = rtc_dir/f"OPERA_L2_RTC-S1_local_incidence_angle_{scene_id}_30_v1.0_mosaic.tif"
+    local_inc_angle_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {local_inc_angle_output} {local_inc_angle_merge_str}"
+    print(f"Merging bursts -> {local_inc_angle_output}")
+    subprocess.run([local_inc_angle_merge_command], shell=True) 
 
-        # merge local incidence angle bursts
-        local_inc_angle_output = rtc_dir/f"OPERA_L2_RTC-S1_local_incidence_angle_{scene_id}_30_v1.0_mosaic.tif"
-        local_inc_angle_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {local_inc_angle_output} {local_inc_angle_merge_str}"
-        print(f"Merging bursts -> {local_inc_angle_output}")
-        subprocess.run([local_inc_angle_merge_command], shell=True) 
-
-        # merge incidence angle bursts
-        inc_angle_output = rtc_dir/f"OPERA_L2_RTC-S1_incidence_angle_{scene_id}_30_v1.0_mosaic.tif"
-        inc_angle_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {inc_angle_output} {inc_angle_merge_str}"
-        print(f"Merging bursts -> {inc_angle_output}")
-        subprocess.run([inc_angle_merge_command], shell=True)
+    # merge incidence angle bursts
+    inc_angle_output = rtc_dir/f"OPERA_L2_RTC-S1_incidence_angle_{scene_id}_30_v1.0_mosaic.tif"
+    inc_angle_merge_command = f"gdal_merge.py -n {no_data_val} -a_nodata {no_data_val} -o {inc_angle_output} {inc_angle_merge_str}"
+    print(f"Merging bursts -> {inc_angle_output}")
+    subprocess.run([inc_angle_merge_command], shell=True)
     
         
-def flatten(input_data_dir): 
+def flatten(input_data_dir: os.PathLike): 
     parent_data_dir = input_data_dir.parent
     
     data_dirs = list(input_data_dir.glob('*'))
@@ -292,7 +255,55 @@ def main():
     input_data_dir = parent_data_dir/"input_OPERA_data"
     input_data_dir.mkdir(parents=True, exist_ok=True)
     if not args.skip_download:
-        download_mosaic_data(input_data_dir, args)
+        # collect CalVal data access info
+        df_rtc = get_rtc_df(args)
+        df_static = get_static_df()
+        scenes = list(df_rtc.S1_Scene_IDs)
+
+        earthaccess.login()
+        for scene_id in scenes:
+            # define/create paths to data dirs
+            rtc_dir = input_data_dir/f"OPERA_L2-RTC_{scene_id}_30_v1.0"
+            dirs = {
+                "rtc_dir": rtc_dir,
+                "vv_burst_dir": rtc_dir/"vv_bursts",
+                "vh_burst_dir": rtc_dir/"vh_bursts",
+                "inc_angle_burst_dir": rtc_dir/"ellipsoidal_inc_angle_bursts",
+                "local_inc_angle_burst_dir": rtc_dir/"local_inc_angle_bursts",
+                "mask_burst_dir": rtc_dir/"layover_shadow_bursts"
+            }
+            for pth in dirs.values():
+                pth.mkdir(exist_ok=True, parents=True)
+
+            # build a dict containing urls to bursts for a given scene by data type
+            scene_burst_dict = build_url_dict(df_rtc, df_static, dirs, scene_id)
+
+            # download data
+            print(f"Downloading RTC bursts and static data for S1 scene: {scene_id}")
+            download_bursts_and_static(scene_burst_dict)
+            
+            # collect paths to downloaded data
+            vv_bursts = list(dirs['vv_burst_dir'].glob('*VV.tif'))
+            vh_bursts = list(dirs['vh_burst_dir'].glob('*VH.tif'))
+            mask_bursts = list(dirs['mask_burst_dir'].glob('*mask.tif'))
+            local_inc_angle_bursts = list(dirs['local_inc_angle_burst_dir'].glob('*local_incidence_angle.tif'))
+            inc_angle_bursts = list(dirs['inc_angle_burst_dir'].glob('*incidence_angle.tif'))
+
+            # reproject bursts to predominant CRS (if necessary) and merge into full S1 scenes
+            epsgs = util.get_projection_counts(vv_bursts)
+            predominant_epsg = None if len(epsgs) == 1 else max(epsgs, key=epsgs.get)
+            merge_bursts(
+                {
+                    "vv_bursts": vv_bursts,
+                    "vh_bursts": vh_bursts,
+                    "mask_bursts": mask_bursts,
+                    "local_inc_angle_bursts": local_inc_angle_bursts,
+                    "inc_angle_bursts": inc_angle_bursts
+                },
+                predominant_epsg,
+                rtc_dir,
+                scene_id
+            )
     flatten(input_data_dir)
 
     
