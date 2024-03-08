@@ -5,7 +5,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Union, Dict, List
 from urllib.parse import urlparse
 
 import earthaccess
@@ -75,9 +75,11 @@ def was_reported(acquisition_time: datetime, scene_id: str, args: object) -> boo
             start_time = datetime.strptime("20220507T161226", "%Y%m%dT%H%M%S")
             end_time = datetime.strptime("20230713T161236", "%Y%m%dT%H%M%S")
         return start_time <= acquisition_time <= end_time
+    else:
+        return True
 
 
-def build_url_dict(df_rtc: pd.DataFrame, df_static: pd.DataFrame, dirs, scene_id: str):
+def build_url_dict(df_rtc: pd.DataFrame, df_static: pd.DataFrame, dirs, scene_id: str) -> Union[Dict, None]:
     scene_burst_dict = {
         dirs["vh_burst_dir"]: df_rtc.where(df_rtc.S1_Scene_IDs == scene_id)
         .dropna()
@@ -109,7 +111,10 @@ def build_url_dict(df_rtc: pd.DataFrame, df_static: pd.DataFrame, dirs, scene_id
 
     for burst in burst_ids:
         df_burst_static = df_static.where(df_static.burst_id == burst).dropna()
-        static_url_list = df_burst_static.product_urls.iloc[0].split(" ")
+        try: 
+            static_url_list = df_burst_static.product_urls.iloc[0].split(" ")
+        except IndexError:
+            continue
 
         # sanitize static URLs
         static_url_list = [url for url in static_url_list if is_valid_url(url)]
@@ -123,9 +128,8 @@ def build_url_dict(df_rtc: pd.DataFrame, df_static: pd.DataFrame, dirs, scene_id
     burst_count = len(scene_burst_dict[dirs["vh_burst_dir"]])
     for ds in scene_burst_dict:
         if len(scene_burst_dict[ds]) != burst_count:
-            raise Exception(
-                f"Found {len(scene_burst_dict[ds])} {ds} bursts, but there were {burst_count} vh bursts."
-            )
+            print(f"Found {len(scene_burst_dict[ds])} {ds} bursts, but there were {burst_count} vh bursts.")
+            return None
     return scene_burst_dict
 
 
@@ -315,8 +319,9 @@ def main():
 
         earthaccess.login()
         for scene_id in scenes:
-            acquisition_time = get_acquisition_time(scene_id)
-            if not was_reported(acquisition_time, args):
+            acquisition_time = util.get_acquisition_time(scene_id)
+            if not was_reported(acquisition_time, scene_id, args):
+                print(f"skipping scene: {scene_id}")
                 continue
 
             # define/create paths to data dirs
@@ -334,6 +339,9 @@ def main():
 
             # build a dict containing urls to bursts for a given scene by data type
             scene_burst_dict = build_url_dict(df_rtc, df_static, dirs, scene_id)
+            if not scene_burst_dict:
+                print(f"skipping scene: {scene_id}")
+                continue
 
             # download data
             print(f"Downloading RTC bursts and static data for S1 scene: {scene_id}")
