@@ -119,6 +119,8 @@ def coregistration(parent_data_dir: os.PathLike, args: object):
             output_dir
             / f"output_{args.site.replace(' ', '_')}_{args.orbital_path}_{p}_OPERA_RTC_Coregistration.ipynb"
         )
+        output_html = Path(output).with_suffix('.html')
+        output_pdf = Path(output).with_suffix('.pdf')
 
         with work_dir(Path.cwd().parent / "coregistration"):
             pm.execute_notebook(
@@ -128,7 +130,18 @@ def coregistration(parent_data_dir: os.PathLike, args: object):
                 parameters=parameters,
             )
 
-            subprocess.run([f"jupyter nbconvert {output} --to pdf"], shell=True)
+            subprocess.run(
+                [f"jupyter nbconvert {output} --to html"],
+                shell=True,
+            )
+            subprocess.run(
+                [
+                    f"pandoc {output_html} "
+                    f"-o {output_pdf} "
+                    "--pdf-engine=weasyprint"
+                ],
+                shell=True,
+            )
 
 
 def main():

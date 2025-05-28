@@ -35,8 +35,14 @@ for i, d in enumerate(stack_dirs):
         }
         output_dirs[i].mkdir(exist_ok=True)
         output = output_dirs[i] / f"output_{Path(d).name}_{p}_coregistration.ipynb"
+        output_html = Path(output).with_suffix('.html')
+        output_pdf = Path(output).with_suffix('.pdf')
         pm.execute_notebook(
             "coregistration.ipynb", output, kernel_name="python3", parameters=parameters
         )
 
-        subprocess.run([f"jupyter nbconvert {output} --to pdf"], shell=True)
+        subprocess.run([f"jupyter nbconvert {output} --to html"], shell=True)
+        subprocess.run(
+            [f"pandoc {output_html} -o {output_pdf} --pdf-engine=weasyprint"],
+            shell=True,
+        )

@@ -24,6 +24,7 @@ dependencies:
   - numpy
   - opensarlab_lib
   - pandas
+  - pandoc
   - papermill
   - plotly
   - pyproj
@@ -34,4 +35,5 @@ dependencies:
   - scipy
   - shapely
   - pip
+  - weasyprint
   - wget

@@ -101,6 +101,8 @@ def absolute_geolocation_evaluation(parent_data_dir: os.PathLike, args: object):
                 output_dirs[i]
                 / f"output_{Path(d).name}_absolute_location_evaluation.ipynb"
             )
+            output_html = Path(output).with_suffix('.html')
+            output_pdf = Path(output).with_suffix('.pdf')
             pm.execute_notebook(
                 Path.cwd() / "absolute_location_evaluation.ipynb",
                 output,
@@ -108,7 +110,18 @@ def absolute_geolocation_evaluation(parent_data_dir: os.PathLike, args: object):
                 parameters=parameters,
             )
 
-            subprocess.run([f"jupyter nbconvert {output} --to pdf"], shell=True)
+            subprocess.run(
+                [f"jupyter nbconvert {output} --to html"],
+                shell=True,
+            )
+            subprocess.run(
+                [
+                    f"pandoc {output_html} "
+                    f"-o {output_pdf} "
+                    "--pdf-engine=weasyprint"
+                ],
+                shell=True,
+            )
 
 
 def main():

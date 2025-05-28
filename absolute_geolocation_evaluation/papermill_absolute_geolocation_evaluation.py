@@ -22,6 +22,8 @@ for i, d in enumerate(data_dirs):
     output = (
         output_dirs[i] / f"output_{Path(d).name}_absolute_location_evaluation.ipynb"
     )
+    output_html = Path(output).with_suffix('.html')
+    output_pdf = Path(output).with_suffix('.pdf')
     pm.execute_notebook(
         "absolute_location_evaluation.ipynb",
         output,
@@ -29,4 +31,8 @@ for i, d in enumerate(data_dirs):
         parameters=parameters,
     )
 
-    subprocess.run([f"jupyter nbconvert {output} --to pdf"], shell=True)
+    subprocess.run([f"jupyter nbconvert {output} --to html"], shell=True)
+    subprocess.run(
+        [f"pandoc {output_html} -o {output_pdf} --pdf-engine=weasyprint"],
+        shell=True,
+    )
