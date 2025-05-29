@@ -101,8 +101,6 @@ for i, d in enumerate(data_dirs):
         kernel_name="python3",
         parameters=parameters_slope_compare,
     )
-    subprocess.run([f"jupyter nbconvert {output_gamma0_compare} --to pdf"], shell=True)
-
     subprocess.run(
         [f"jupyter nbconvert {output_gamma0_compare} --to html"],
         shell=True,
