@@ -265,26 +265,52 @@ def flatten(input_data_dir: os.PathLike):
             output_1 = (
                 output_dir / f"output_{Path(d).name}_prep_flattening_part_1.ipynb"
             )
+            output_1_html = Path(output_1).with_suffix('.html')
+            output_1_pdf = Path(output_1).with_suffix('.pdf')
             pm.execute_notebook(
                 "data_prep/prep_flattening_part_1.ipynb",
                 output_1,
                 kernel_name="python3",
                 parameters=parameters_prep_1,
             )
-            subprocess.run([f"jupyter nbconvert {output_1} --to pdf"], shell=True)
+            subprocess.run(
+                [f"jupyter nbconvert {output_1} --to html"],
+                shell=True,
+            )
+            subprocess.run(
+                [
+                    f"pandoc {output_1_html} "
+                    f"-o {output_1_pdf} "
+                    "--pdf-engine=weasyprint"
+                ],
+                shell=True,
+            )
 
             # data prep notebook 2
             parameters_prep_2["data_dir"] = str(input_dirs_prep_2[i])
             output_2 = (
                 output_dir / f"output_{Path(d).name}_prep_flattening_part_2.ipynb"
             )
+            output_2_html = Path(output_2).with_suffix('.html')
+            output_2_pdf = Path(output_2).with_suffix('.pdf')
             pm.execute_notebook(
                 "data_prep/prep_flattening_part_2.ipynb",
                 output_2,
                 kernel_name="python3",
                 parameters=parameters_prep_2,
             )
-            subprocess.run([f"jupyter nbconvert {output_2} --to pdf"], shell=True)
+            subprocess.run(
+                [f"jupyter nbconvert {output_2} --to html"],
+                shell=True,
+            )
+            subprocess.run(
+                [
+                    f"pandoc {output_2_html} "
+                    f"-o {output_2_pdf} "
+                    "--pdf-engine=weasyprint"
+                ],
+                shell=True,
+            )
 
             # Gamma0 Comparisons
             parameters_slope_compare["data_dir"] = str(input_dirs_gamma0_compare[i])
@@ -292,6 +318,12 @@ def flatten(input_data_dir: os.PathLike):
             output_gamma0_compare = (
                 output_dir / f"output_{Path(d).name}_flattening_analysis.ipynb"
             )
+            output_gamma0_compare_html = Path(
+                output_gamma0_compare
+            ).with_suffix('.html')
+            output_gamma0_compare_pdf = Path(
+                output_gamma0_compare
+            ).with_suffix('.pdf')
             pm.execute_notebook(
                 "flattening_analysis/flattening_analysis.ipynb",
                 output_gamma0_compare,
@@ -299,7 +331,16 @@ def flatten(input_data_dir: os.PathLike):
                 parameters=parameters_slope_compare,
             )
             subprocess.run(
-                [f"jupyter nbconvert {output_gamma0_compare} --to pdf"], shell=True
+                [f"jupyter nbconvert {output_gamma0_compare} --to html"],
+                shell=True,
+            )
+            subprocess.run(
+                [
+                    f"pandoc {output_gamma0_compare_html} "
+                    f"-o {output_gamma0_compare_pdf} "
+                    "--pdf-engine=weasyprint"
+                ],
+                shell=True,
             )
 
 
