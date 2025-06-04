@@ -76,7 +76,7 @@ def get_projection(img_path: Union[Path, str]) -> Union[str, None]:
     except TypeError:
         raise FileNotFoundError
 
-    regex = 'ID\["EPSG",[0-9]{4,5}\]\]$'
+    regex = r'ID\["EPSG",[0-9]{4,5}\]\]$'
     results = re.search(regex, info)
     if results:
         return results.group(0).split(",")[1][:-2]
