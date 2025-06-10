@@ -52,7 +52,7 @@ def get_scene_df(args: object) -> pd.DataFrame:
             zObject.extractall(path=zip_path.parent)
 
     # load burst urls for site/calval module
-    calval_module = "Coregistration"
+    calval_module = "Relative Location Evaluation (RLE)"
     df = pd.read_csv(linked_data_csv)
     return df.where(
         (df.Site == args.site)
@@ -62,7 +62,7 @@ def get_scene_df(args: object) -> pd.DataFrame:
 
 
 def was_reported(acquisition_time: datetime, args: object) -> bool:
-    # limit scenes to those reported in Oct 2023 coregistration validation
+    # limit scenes to those reported in Oct 2023 RLE validation
     if args.site == "Delta Junction":
         if args.orbital_path == 94:
             start_time = datetime.strptime("20201209T032007", "%Y%m%dT%H%M%S")
@@ -85,12 +85,12 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
-def coregistration(parent_data_dir: os.PathLike, args: object):
+def RLE(parent_data_dir: os.PathLike, args: object):
 
     # True to delete mosaicked RTCs and static files, False to save
     delete_mosaics = False
 
-    output_dir = parent_data_dir.parent / "output_Coregistration"
+    output_dir = parent_data_dir.parent / "output_RLE"
 
     polarizations = ["VV", "VH"]
 
@@ -117,14 +117,14 @@ def coregistration(parent_data_dir: os.PathLike, args: object):
         output_dir.mkdir(exist_ok=True)
         output = (
             output_dir
-            / f"output_{args.site.replace(' ', '_')}_{args.orbital_path}_{p}_OPERA_RTC_Coregistration.ipynb"
+            / f"output_{args.site.replace(' ', '_')}_{args.orbital_path}_{p}_OPERA_RTC_RLE.ipynb"
         )
         output_html = Path(output).with_suffix('.html')
         output_pdf = Path(output).with_suffix('.pdf')
 
-        with work_dir(Path.cwd().parent / "coregistration"):
+        with work_dir(Path.cwd().parent / "RLE"):
             pm.execute_notebook(
-                "coregistration.ipynb",
+                "RLE.ipynb",
                 output,
                 kernel_name="python3",
                 parameters=parameters,
@@ -215,7 +215,7 @@ def main():
             for output, bursts in {vv_output: vv_bursts, vh_output: vh_bursts}.items():
                 util.merge_bursts(scene_id, bursts, output)
 
-    coregistration(parent_data_dir, args)
+    RLE(parent_data_dir, args)
 
 
 if __name__ == "__main__":
