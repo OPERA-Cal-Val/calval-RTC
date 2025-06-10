@@ -29,9 +29,7 @@ The image includes all software needed to run the workflows in a Jupyter Lab env
 
 `docker pull ghcr.io/opera-cal-val/calval-rtc:latest`
 
-## Environment Option 3:
-
-Build the image from a Dockerfile
+## Environment Option 3: Build the image from a Dockerfile
 
 `docker build -t calval-rtc:latest path/to/calval-RTC/environment/`
 
