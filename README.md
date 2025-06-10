@@ -8,15 +8,14 @@
 
 ---
 ---
-## Create the `opera_calval_rtc` Conda Environment
+## Environment Option 1: Create the `opera_calval_rtc` Conda Environment
 
 If you are working locally:
   - Make sure you have conda/mamba installed
     - [Instructions to install miniforge (containing conda and mamba)](https://github.com/conda-forge/miniforge#mambaforge)
   - Create the `opera_calval_rtc` conda environment using one of the `yaml` files in the `environments` directory
     - In a terminal, run:
-      - `mamba env create -f path/to/calval-RTC/environment/jlab4_environment.yaml`
-        - Use `calval-RTC/environment/jlab3_environment.yaml` if you'd like to use Jupyter Lab~=3.0 instead of Jupyter Lab~=4.0
+      - `mamba env create -f path/to/calval-RTC/environment/environment.yaml`
   - Activate your environment and start Jupyter Lab. 
     - In a terminal run: 
       - `cd path/to/calval-RTC`
@@ -24,9 +23,17 @@ If you are working locally:
       - `python -m ipykernel install --user --name opera_calval_rtc`
       - `jupyter lab`
 
-If you are working in [OpenSARLab](https://opensarlab.asf.alaska.edu/):
-  - create the `opera_calval_rtc` conda environment using `environment/osl_environment.yaml`
-    - Use the `~/conda_environments/Create_OSL_Conda_Environments.ipynb` notebook to create the environment 
+## Environment Option 2: Pull the Docker image from `ghcr.io`
+
+The image includes all software needed to run the workflows in a Jupyter Lab environment
+
+`docker pull ghcr.io/opera-cal-val/calval-rtc:latest`
+
+## Environment Option 2:
+
+Build the image from a Dockerfile
+
+`docker build -t calval-rtc:latest path/to/calval-RTC/environment/`
 
 ---
 ---
