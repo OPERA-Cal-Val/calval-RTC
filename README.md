@@ -92,14 +92,16 @@ Run the `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` notebook on a 
 ---
 ---
 
-### Point Target-Based Absolute Geolocation Evaluation Module
+### (Absolute Geolocation Evaluation) ALE
+
+Point Target-Based Absolute Geolocation Evaluation Module
 
 1. Download and mosaic OPERA RTC sample burst data for a given Sentinel-1 scene using the notebook `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` or the Python script `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py` (see above instructions)
 1. Run the notebook to evaluate absolute geolocation on a single scene or the Python script to evaluate multiple scenes (instructions follow)
 
-#### **Option 1: Run the Absolute Geolocation Validation Notebook:**
+#### **Option 1: Run the ALE Validation Notebook:**
 
-Run `absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb` notebook
+Run `ALE/ALE.ipynb` notebook
 
 The notebook:
 - Inputs a path to the directory holding an RTC mosaic
@@ -115,24 +117,26 @@ The notebook:
 
 #### **Option 2: Run as a Script with Papermill:**
 
-Run the `absolute_geolocation_evaluation/ALE_OPERA-RTC.ipynb` notebook on a list of paths to OPERA RTC mosaics using the `calval-RTC/absolute_geolocation_evaluation/papermill_absolute_geolocation_evaluation.py` Python script
+Run the `ALE/ALE.ipynb` notebook on a list of paths to OPERA RTC mosaics using the `calval-RTC/ALE/papermill_ALE.py` Python script
 
 - Update the `data_dirs` list in the script with paths to directories containing OPERA RTC mosaics
 - In a terminal, run the following commands:
   1. `conda activate opera_calval_rtc`
-  1. `python path/to/absolute_geolocation_evaluation/papermill_absolute_geolocation_evaluation.py`
+  1. `python path/to/ALE/papermill_ALE.py`
 
 ---
 ---
 
-### Cross-Correlation-Based Relative Geolocation Evaluation Module
+### Relative Geolocation Evaluation (RLE) Module
+
+Cross-Correlation-Based Relative Geolocation Evaluation
 
 1. Download and mosaic a OPERA RTC sample burst data for a stack of Sentinel-1 scenes using the notebook `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` or the Python script `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py` (see above instructions)
 1. Run the notebook to evaluate relative geolocation between scenes with a cross-correlation approach (instructions follow)
 
-#### **Option 1: Run the Cross-Correlation-Based Relative Geolocation Evaluation Notebook:**
+#### **Option 1: Run the RLE Notebook:**
 
-Run the `coregistration/coregistration.ipynb` notebook
+Run the `RLE/RLE.ipynb` notebook
 
 The notebook:
 - Buffers all scenes in the stack so they have the same extents
@@ -149,7 +153,7 @@ The notebook:
 
 #### **Option 2: Run as a Script With Papermill
 
-Run the `coregistration/papermill_coregistration.py` script on multiple RTC stacks
+Run the `RLE/papermill_RLE.py` script on multiple RTC stacks
 
 1. Update `stack_dirs`, adding paths to the directories holding RTC stacks
 1. Update `delete_mosaics`
@@ -161,12 +165,14 @@ Run the `coregistration/papermill_coregistration.py` script on multiple RTC stac
 1. Run script in `opera_calval_rtc` conda environment
    1. Open a terminal and run the following commands
    2. `conda activate opera_calval_rtc`
-   3. `Python path/to/coregistration/papermill_coregistration.py`
+   3. `Python path/to/RLE/papermill_RLE.py`
 
 ---
 ---
 
-### 3) Radiometric Terrain Flattening Performance Evaluation Module: Gamma Naught Comparisons of Foreslope, Flat, and Backslope Pixels in Forested Regions
+### 3) Terrain Flattening Module:
+
+Radiometric Terrain Flattening Performance Evaluation Module: Gamma Naught Comparisons of Foreslope, Flat, and Backslope Pixels in Forested Regions
 
 1. Download and mosaic OPERA RTC sample burst data for a given Sentinel-1 scene using the notebook `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` or the Python script `papermill_OPERA_RTC_download_reproject_mosaic_sample_bursts.py` (see above instructions)
 
