@@ -37,7 +37,7 @@ def get_scene_df() -> pd.DataFrame:
     linked_data_csv = Path.cwd().parent / "linking-data/opera_rtc_table.csv"
 
     # load burst urls for site/calval module
-    calval_module = "Absolute Geolocation Evaluation"
+    calval_module = "Absolute Location Evaluation (ALE)"
     df = pd.read_csv(linked_data_csv)
     return df.where(
         (df.Site == "California")
@@ -78,20 +78,20 @@ def download_bursts(
     return list(vv_burst_dir.glob("*VV.tif"))
 
 
-def absolute_geolocation_evaluation(parent_data_dir: os.PathLike, args: object):
+def ALE(parent_data_dir: os.PathLike, args: object):
     data_dirs = [
         p for p in parent_data_dir.glob("*") if not str(p.name).startswith(".")
     ]
 
     output_dirs = [
         p.parents[1]
-        / f"output_OPERA_RTC_ALE_{args.site}_{args.orbital_path}/absolute_geolocation_evaluation_{p.name.split('RTC_')[1]}"
+        / f"output_OPERA_RTC_ALE_{args.site}_{args.orbital_path}/ALE_{p.name.split('RTC_')[1]}"
         for p in data_dirs
     ]
 
     parameters = {"data_dir": "", "savepath": ""}
 
-    with work_dir(Path.cwd().parent / "absolute_geolocation_evaluation"):
+    with work_dir(Path.cwd().parent / "ALE"):
         for i, d in enumerate(tqdm(data_dirs)):
             print(f"Performing Absolute Geolocation Evaluation on {d}")
             parameters["data_dir"] = str(d)
@@ -99,12 +99,12 @@ def absolute_geolocation_evaluation(parent_data_dir: os.PathLike, args: object):
             output_dirs[i].mkdir(parents=True, exist_ok=True)
             output = (
                 output_dirs[i]
-                / f"output_{Path(d).name}_absolute_location_evaluation.ipynb"
+                / f"output_{Path(d).name}_ALE.ipynb"
             )
             output_html = Path(output).with_suffix('.html')
             output_pdf = Path(output).with_suffix('.pdf')
             pm.execute_notebook(
-                Path.cwd() / "absolute_location_evaluation.ipynb",
+                Path.cwd() / "ALE.ipynb",
                 output,
                 kernel_name="python3",
                 parameters=parameters,
@@ -155,7 +155,7 @@ def main():
             # merge bursts into a single scene
             util.merge_bursts(scene_id, vv_bursts, output)
 
-    absolute_geolocation_evaluation(parent_data_dir, args)
+    ALE(parent_data_dir, args)
 
 
 if __name__ == "__main__":

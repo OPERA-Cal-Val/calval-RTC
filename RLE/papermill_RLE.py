@@ -3,7 +3,7 @@ from pathlib import Path
 
 import papermill as pm
 
-# list of paths to OPERA-RTC mosaics on which to run coregistration
+# list of paths to OPERA-RTC mosaics on which to run RLE
 stack_dirs = [
     "path/to/dir/holding/RTC/stack",
 ]
@@ -11,7 +11,7 @@ stack_dirs = [
 # True to delete mosaicked RTCs and static files, False to save
 delete_mosaics = False
 
-output_dirs = [Path.cwd() / f"cross_correlation_{Path(p).name}" for p in stack_dirs]
+output_dirs = [Path.cwd() / f"RLE_{Path(p).name}" for p in stack_dirs]
 
 polarizations = ["VV", "VH"]
 
@@ -34,11 +34,11 @@ for i, d in enumerate(stack_dirs):
             "cleanup_list": cleanup_list,
         }
         output_dirs[i].mkdir(exist_ok=True)
-        output = output_dirs[i] / f"output_{Path(d).name}_{p}_coregistration.ipynb"
+        output = output_dirs[i] / f"output_{Path(d).name}_{p}_RLE.ipynb"
         output_html = Path(output).with_suffix('.html')
         output_pdf = Path(output).with_suffix('.pdf')
         pm.execute_notebook(
-            "coregistration.ipynb", output, kernel_name="python3", parameters=parameters
+            "RLE.ipynb", output, kernel_name="python3", parameters=parameters
         )
 
         subprocess.run([f"jupyter nbconvert {output} --to html"], shell=True)
