@@ -92,7 +92,7 @@ Run the `OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb` notebook on a 
 ---
 ---
 
-### (Absolute Geolocation Evaluation) ALE
+### Absolute Geolocation Evaluation (ALE)
 
 Point Target-Based Absolute Geolocation Evaluation Module
 
