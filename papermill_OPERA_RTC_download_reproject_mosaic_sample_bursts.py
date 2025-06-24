@@ -9,6 +9,7 @@ scenes = [
 
 parameters = {
     "scene": "",
+    "prod_version": 1.0,
     "opera_dir": str(Path.cwd()), # directory in which OPERA RTC output directories will be stored
     "keep_date_index": -1 # 0: oldest sample, -1: most recent sample, -2: 2nd to most recent sample, etc...
 
