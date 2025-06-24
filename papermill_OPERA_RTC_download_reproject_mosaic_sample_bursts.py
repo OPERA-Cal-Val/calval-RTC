@@ -17,10 +17,13 @@ parameters = {
 
 for s in scenes:
     parameters['scene'] = s
-    pm.execute_notebook(
-        'OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb',
-        f'output_{s}_OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb',
-        kernel_name='python3',
-        parameters = parameters
-    )
+    try:
+        pm.execute_notebook(
+            'OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb',
+            f'output_{s}_OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb',
+            kernel_name='python3',
+            parameters = parameters
+        )
+    except Exception:
+        pass
     
