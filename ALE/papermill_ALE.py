@@ -25,7 +25,7 @@ for i, d in enumerate(data_dirs):
     output_html = Path(output).with_suffix('.html')
     output_pdf = Path(output).with_suffix('.pdf')
     pm.execute_notebook(
-        "ALE_OPERA-RTC.ipynb",
+        "ALE.ipynb",
         output,
         kernel_name="python3",
         parameters=parameters,
