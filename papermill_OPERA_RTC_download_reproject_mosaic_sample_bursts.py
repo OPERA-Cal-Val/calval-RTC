@@ -9,6 +9,7 @@ scenes = [
 
 parameters = {
     "scene": "",
+    "prod_version": 1.0,
     "opera_dir": str(Path.cwd()), # directory in which OPERA RTC output directories will be stored
     "keep_date_index": -1 # 0: oldest sample, -1: most recent sample, -2: 2nd to most recent sample, etc...
 
@@ -16,10 +17,13 @@ parameters = {
 
 for s in scenes:
     parameters['scene'] = s
-    pm.execute_notebook(
-        'OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb',
-        f'output_{s}_OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb',
-        kernel_name='python3',
-        parameters = parameters
-    )
+    try:
+        pm.execute_notebook(
+            'OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb',
+            f'output_{s}_OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb',
+            kernel_name='python3',
+            parameters = parameters
+        )
+    except Exception:
+        pass
     
