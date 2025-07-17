@@ -120,7 +120,7 @@ The notebook:
 
 Run the `ALE/ALE.ipynb` notebook on a list of paths to OPERA RTC mosaics using the `calval-RTC/ALE/papermill_ALE.py` Python script
 
-- Update the `data_dirs` list in the script with paths to directories containing OPERA RTC mosaics
+- Update the `data_dirs_parent` path in the script to reflect the parent path of the directories containing OPERA RTC mosaics
 - In a terminal, run the following commands:
   1. `conda activate opera_calval_rtc`
   1. `python path/to/ALE/papermill_ALE.py`

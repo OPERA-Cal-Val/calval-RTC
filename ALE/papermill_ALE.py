@@ -1,15 +1,23 @@
+import glob
+import os
 import subprocess
 from pathlib import Path
 
 import papermill as pm
 
-# list of paths to OPERA-RTC mosaics on which to run ALE
+# Specify parent directory of OPERA-RTC mosaics on which to run RLE
+data_dirs_parent = "/home/jovyan/calval-RTC"
+
+# parent directory containing OPERA-RTC mosaics on which to run ALE
 data_dirs = [
-    # "/home/jovyan/calval-RTC/OPERA_RTC_S1A_IW_SLC__1SDV_20230611T002830_20230611T002857_048931_05E256_1866",
+    d for d in glob.glob(os.path.join(data_dirs_parent, "OPERA_RTC_S1*"))
+    if os.path.isdir(d)
 ]
 
+output_dir = Path(data_dirs_parent) / 'output_ALE'
+output_dir.mkdir(exist_ok=True)
 output_dirs = [
-    Path(p).parents[1] / f"output_ALE_{p.split('RTC_')[-1]}"
+    output_dir / f"{p.split('RTC_')[-1]}"
     for p in data_dirs
 ]
 
