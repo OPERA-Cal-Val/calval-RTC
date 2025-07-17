@@ -11,7 +11,7 @@ stack_dirs = [
 # True to delete mosaicked RTCs and static files, False to save
 delete_mosaics = False
 
-output_dirs = [Path.cwd() / f"RLE_{Path(p).name}" for p in stack_dirs]
+output_dirs = [p / f"output_RLE/RLE_{Path(p).name}" for p in stack_dirs]
 
 polarizations = ["VV", "VH"]
 
@@ -33,7 +33,7 @@ for i, d in enumerate(stack_dirs):
             "delete_mosaics": delete_mosaics,
             "cleanup_list": cleanup_list,
         }
-        output_dirs[i].mkdir(exist_ok=True)
+        output_dirs[i].mkdir(exist_ok=True, parents=True)
         output = output_dirs[i] / f"output_{Path(d).name}_{p}_RLE.ipynb"
         output_html = Path(output).with_suffix('.html')
         output_pdf = Path(output).with_suffix('.pdf')
