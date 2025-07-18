@@ -11,7 +11,7 @@ stack_dirs = [
 # True to delete mosaicked RTCs and static files, False to save
 delete_mosaics = False
 
-output_dirs = [p / f"output_RLE/RLE_{Path(p).name}" for p in stack_dirs]
+output_dirs = [Path(f"{p}/output_RLE/RLE_{Path(p).name}") for p in stack_dirs]
 
 polarizations = ["VV", "VH"]
 
