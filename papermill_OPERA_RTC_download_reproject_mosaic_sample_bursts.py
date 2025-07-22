@@ -115,6 +115,17 @@ for group in groups:
             subprocess.run(merge_command, check=True)
             print(f"Merged to: {output_path}")
 
+    # Concatenate `opera_bursts.txt` files into one in the merged_path
+    merged_txt_path = os.path.join(merged_path, "opera_bursts.txt")
+    with open(merged_txt_path, "w") as outfile:
+        for folder, _, _ in group:
+            txt_path = os.path.join(base_dir, folder, "opera_bursts.txt")
+            if os.path.exists(txt_path):
+                with open(txt_path, "r") as infile:
+                    outfile.write(infile.read())
+                    outfile.write("\n")  # Optional: ensure line break between files
+    print(f"Combined opera_bursts.txt written to: {merged_txt_path}")
+
     # Step 5: Move original subfolders
     for folder, _, _ in group:
         src = os.path.join(base_dir, folder)
