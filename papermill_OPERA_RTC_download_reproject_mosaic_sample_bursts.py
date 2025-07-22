@@ -24,7 +24,6 @@ FILE_PATTERNS = [
 
 base_dir = str(Path.cwd())
 
-
 parameters = {
     "scene": "",
     "prod_version": 1.0,
