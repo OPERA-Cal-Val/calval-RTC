@@ -106,7 +106,7 @@ for group in groups:
                 if fname.startswith(pattern) and fname.endswith(".tif"):
                     matched_files.append(os.path.join(folder_path, fname))
         if matched_files:
-            output_name = f"{pattern}_30_v1.0_mosaic.tif"
+            output_name = f"{pattern}_{starts[0]}_30_v1.0_mosaic.tif"
             output_path = os.path.join(merged_path, output_name)
             merge_command = [
                 "gdal_merge.py", "-o", output_path, *matched_files
