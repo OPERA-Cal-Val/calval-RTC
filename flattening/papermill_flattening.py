@@ -26,14 +26,14 @@ parameters_slope_compare = {
     "log": log,
 }
 
+# set output directories
+output_parent_dir = parent_data_dir / "output_flattening_analyses"
+output_parent_dir.mkdir(exist_ok=True)
+
+intermediary_parent_dir = parent_data_dir / "intermediary_flattening_data"
+intermediary_parent_dir.mkdir(exist_ok=True)
+
 for i, d in enumerate(data_dirs):
-    parent_data_dir = Path(d).parents[1]
-    output_parent_dir = parent_data_dir / "output_flattening_analyses"
-    output_parent_dir.mkdir(exist_ok=True)
-
-    intermediary_parent_dir = parent_data_dir / "intermediary_flattening_data"
-    intermediary_parent_dir.mkdir(exist_ok=True)
-
     input_dirs_prep_2 = [
         intermediary_parent_dir / f"{Path(p).stem}_prepped_for_slope_comparison"
         for p in data_dirs
