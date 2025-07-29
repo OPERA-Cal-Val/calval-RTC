@@ -4,8 +4,12 @@ from pathlib import Path
 import papermill as pm
 
 # list of paths to OPERA-RTC mosaics on which to run gamma0 comparisons on foreslopes, flat areas, and backslopes
+data_dirs_parent = "/home/jovyan/calval-RTC"
+
+# parent directory containing OPERA-RTC mosaics on which to run ALE
 data_dirs = [
-    "/home/jovyan/calval-RTC/OPERA_RTC_S1A_IW_SLC__1SDV_20230707T015044_20230707T015112_049311_05EDF6_1A68",
+    d for d in glob.glob(os.path.join(data_dirs_parent, "OPERA_RTC_S1*"))
+    if os.path.isdir(d)
 ]
 
 log = True  # True: log scale, False: power scale

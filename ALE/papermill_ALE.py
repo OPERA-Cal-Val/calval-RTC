@@ -5,7 +5,7 @@ from pathlib import Path
 
 import papermill as pm
 
-# Specify parent directory of OPERA-RTC mosaics on which to run RLE
+# Specify parent directory of OPERA-RTC mosaics on which to run ALE
 data_dirs_parent = "/home/jovyan/calval-RTC"
 
 # parent directory containing OPERA-RTC mosaics on which to run ALE
