@@ -27,10 +27,10 @@ parameters_slope_compare = {
 }
 
 # set output directories
-output_parent_dir = "output_flattening_analyses"
+output_parent_dir = Path("output_flattening_analyses")
 output_parent_dir.mkdir(exist_ok=True)
 
-intermediary_parent_dir = "intermediary_flattening_data"
+intermediary_parent_dir = Path("intermediary_flattening_data")
 intermediary_parent_dir.mkdir(exist_ok=True)
 
 for i, d in enumerate(data_dirs):
