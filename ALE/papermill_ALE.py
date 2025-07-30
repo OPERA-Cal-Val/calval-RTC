@@ -46,7 +46,7 @@ for i, d in enumerate(data_dirs):
             [f"pandoc {output_html} -o {output_pdf} --pdf-engine=weasyprint"],
             shell=True,
         )
-    except ValueError:
+    except (ValueError, IndexError):
         print(f'ALE analysis of {d} failed, move onto next file')
         pass
 

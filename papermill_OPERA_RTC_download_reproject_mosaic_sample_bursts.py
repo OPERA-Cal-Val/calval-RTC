@@ -46,6 +46,21 @@ for s in scenes:
     except Exception:
         pass
 
+# flag and delete folders/notebooks corresponding to failed downloads
+for folder in Path(base_dir).iterdir():
+    if folder.is_dir() and folder.name.startswith("OPERA_RTC_S1"):
+        # Check for .tif files inside the subdirectory (recursively)
+        tif_files = list(folder.rglob("*.tif"))
+        if not tif_files:
+            print(f"Deleting folder: {folder}")
+            shutil.rmtree(folder)
+
+            # Find and delete matching .ipynb file in base_dir
+            index_str = folder.name[10:]  # Customize as needed
+            for ipynb_file in base_dir.glob(f"*{index_str}*.ipynb"):
+                print(f"Deleting notebook: {ipynb_file}")
+                ipynb_file.unlink()
+
 # Step 2: Collect subfolders with start/end times
 folder_info = []
 for folder in os.listdir(base_dir):
