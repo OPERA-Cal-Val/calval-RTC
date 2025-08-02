@@ -3,6 +3,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import matplotlib.pyplot as plt
+import pandas as pd
 import papermill as pm
 
 # list of paths to OPERA-RTC mosaics on which to run gamma0 comparisons on foreslopes, flat areas, and backslopes
@@ -119,3 +121,58 @@ for i, d in enumerate(data_dirs):
         ],
         shell=True,
     )
+
+
+# plot aggregate flattening
+
+# Load data
+csv_files = output_parent_dir.glob('*/*Results*.csv')
+
+# Read and concatenate
+df_list = [pd.read_csv(csv_file) for csv_file in csv_files]
+df = pd.concat(df_list, ignore_index=True)
+
+# Convert to datetime
+dt_series = [i[27:35] for i in df['Granule'].to_list()]
+dt_series = pd.to_datetime(dt_series, format="%Y%m%d")
+# Get day of year
+day_of_year = dt_series.dayofyear.tolist()
+df['Day'] = day_of_year
+
+# plot VH/VV separately
+for pol_iter in ['VH', 'VV']:
+    df_filtered = df[df['Polarization'] == pol_iter]
+
+    fig, ax = plt.subplots(figsize=(8,8))
+
+    ax.set_ylim(-1.1, 1.1)
+    ax.set_xlim(0, 365)
+
+    plt.scatter(
+        df_filtered['Day'].to_numpy(),
+        df_filtered['Foreslope Median - Backslope Median'].to_numpy(), 
+        color='red',
+        label=pol_iter)
+
+    # Shaded gray region from -1 to 1
+    ax.axhspan(-1, 1, color='gray', alpha=0.2, label='Requirement')
+
+    # Season labels (approximate days for Northern Hemisphere)
+    ax.text(60, 0.75, 'Winter', ha='center', fontsize=10, color='blue')
+    ax.text(200, 0.75, 'Summer', ha='center', fontsize=10, color='green')
+    ax.text(320, 0.75, 'Winter', ha='center', fontsize=10, color='blue')
+
+    ax.set_xlabel("Day of year")
+    ax.set_ylabel(fr"$\Delta$ {pol_iter} [dB]")
+    ax.set_title('Seasonality Analysis (Foreslope - Backslope)')
+
+    ax.grid(True)
+    ax.legend()
+    plt.tight_layout()
+
+    # Save figure
+    output_fig = f'aggregate_{pol_iter}.png'
+    plt.savefig(output_fig, dpi=300, transparent=True)
+    plt.close()
+    
+
