@@ -3,6 +3,7 @@ import os
 import subprocess
 from pathlib import Path
 
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -59,6 +60,7 @@ for i, d in enumerate(data_dirs):
 # Load data
 ale_csv_file = next(output_dir.glob('*_ALE30-Results.csv'), None)
 df = pd.read_csv(ale_csv_file)
+df["Date"] = pd.to_datetime(df[["Year", "Month", "Day"]])
 
 # Compute statistics from aggregate of ALE measurements
 mean_easting = np.mean(df['Easting_Bias'])
@@ -127,4 +129,43 @@ plt.errorbar(
 # Save figure
 ale_csv_fig = output_dir/'aggregate_ALE_GeolocationPLOT.png'
 plt.savefig(ale_csv_fig, dpi=300, transparent=True)
+plt.close()
 
+
+# plot northing/easting offsets
+for ale_dim in ['Northing', 'Easting']:
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    ax.set_ylim(-10, 10)
+
+    ax.errorbar(
+        df["Date"],
+        df[f"{ale_dim}_Bias"],
+        yerr=df[f"sig_{ale_dim}_Bias"],
+        fmt="o",
+        ecolor="gray",
+        capsize=4,
+        capthick=1,
+        color="black",
+    )
+
+    # Shaded gray region from -6 to 6
+    ax.axhspan(-6, 6, color='gray', alpha=0.2, label='Requirement')
+
+    ax.set_xlabel("Time")
+    ax.set_ylabel(f"{ale_dim} [m]")
+
+    # Set major x-ticks every 6 months
+    locator = mdates.MonthLocator(interval=6)
+    formatter = mdates.DateFormatter("%b %Y")
+    ax.xaxis.set_major_locator(locator)
+    ax.xaxis.set_major_formatter(formatter)
+    plt.xticks(rotation=45)
+
+    ax.grid(True)
+    ax.legend()
+    plt.tight_layout()
+    # Save figure
+    output_fig = output_dir/f'aggregate_{ale_dim}.png'
+    plt.savefig(output_fig, dpi=300, transparent=True)
+    plt.close()
