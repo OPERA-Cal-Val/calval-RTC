@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import papermill as pm
 
@@ -123,7 +124,8 @@ for i, d in enumerate(data_dirs):
     )
 
 
-# plot aggregate flattening
+# plot difference between foreslope and backslope backscatter
+# as a function of day of year
 
 # Load data
 csv_files = output_parent_dir.glob('*/*Results*.csv')
@@ -180,3 +182,87 @@ for pol_iter in ['VH', 'VV']:
     plt.close()
     
 
+# plot difference between foreslope and backslope backscatter
+# as an aggregate for all analyzed sites
+# Compute statistics from aggregate of ALE measurements
+df_filtered_VH = df[df['Polarization'] == 'VH']
+df_filtered_VV = df[df['Polarization'] == 'VV']
+mean_VH = np.mean(df_filtered_VH['Foreslope Median - Backslope Median'])
+mean_VH_std = np.sqrt(np.sum(
+    (df_filtered_VH['Foreslope STD'] - df_filtered_VH['Backslope STD']) ** 2
+))
+mean_VV = np.mean(df_filtered_VV['Foreslope Median - Backslope Median'])
+mean_VV_std = np.sqrt(np.sum(
+    (df_filtered_VV['Foreslope STD'] - df_filtered_VV['Backslope STD']) ** 2
+))
+
+# Create plot
+fig, ax = plt.subplots(figsize=(8, 8))
+requirement = plt.Rectangle(
+    (-1.0, -1.0),
+    2,
+    2,
+    facecolor=(0.5, 0.5, 0.5, 0.2),
+    edgecolor='black',
+    label='Requirement'
+)
+ax.add_patch(requirement)
+
+ax.grid(True)
+ax.set_xlim(-2, 2)
+ax.set_ylim(-2, 2)
+ax.axhline(0, color='black')
+ax.axvline(0, color='black')
+
+ax.set_title(
+    fr"$\Delta$ VH: {mean_VH:.3f} ± {mean_VH_std:.3f} dB,\n"
+    fr"$\Delta$ VV: {mean_VV:.3f} ± {mean_VV_std:.3f} dB"
+)
+
+ax.set_xlabel(fr"$\Delta$ VV [dB]")
+ax.set_ylabel(fr"$\Delta$ VH [dB]")
+fig.suptitle('All Sites (Foreslope - Backslope)')
+
+# Plot error bars for each scene
+# Element-wise RSS of Foreslope - Backslope std
+rss_diff_VH = np.abs(
+    df_filtered_VH['Foreslope STD'] - df_filtered_VH['Backslope STD']
+)
+rss_diff_VV = np.abs(
+    df_filtered_VV['Foreslope STD'] - df_filtered_VV['Backslope STD']
+)
+
+plt.errorbar(
+    df_filtered_VV['Foreslope Median - Backslope Median'].to_numpy(),
+    df_filtered_VH['Foreslope Median - Backslope Median'].to_numpy(),
+    xerr=rss_diff_VV.to_numpy(),
+    yerr=rss_diff_VH.to_numpy(),
+    barsabove=True,
+    capsize=8,
+    capthick=2,
+    fmt='o',
+    color='gray',
+    linewidth=2,
+    markersize=20,
+    ecolor='gray',
+    alpha=0.5
+)
+
+# Plot mean error bar
+plt.errorbar(
+    mean_VV,
+    mean_VH,
+    xerr=mean_VV_std,
+    yerr=mean_VH_std,
+    barsabove=True,
+    capsize=8,
+    capthick=2,
+    fmt='ro',
+    linewidth=2,
+    markersize=20
+)
+
+# Save figure
+output_fig = 'aggregate_flattening_calvalPLOT.png'
+plt.savefig(output_fig, dpi=300, transparent=True)
+plt.close()
