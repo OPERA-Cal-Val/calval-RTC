@@ -161,6 +161,10 @@ for pol_iter in ['VH', 'VV']:
     ax.text(60, 0.75, 'Winter', ha='center', fontsize=10, color='blue')
     ax.text(200, 0.75, 'Summer', ha='center', fontsize=10, color='green')
     ax.text(320, 0.75, 'Winter', ha='center', fontsize=10, color='blue')
+    ax.axvline(x=160, color='green', linestyle='--')
+    ax.axvline(x=240, color='green', linestyle='--')
+    ax.axvline(x=80, color='blue', linestyle='--')
+    ax.axvline(x=280, color='blue', linestyle='--')
 
     ax.set_xlabel("Day of year")
     ax.set_ylabel(fr"$\Delta$ {pol_iter} [dB]")
@@ -171,7 +175,7 @@ for pol_iter in ['VH', 'VV']:
     plt.tight_layout()
 
     # Save figure
-    output_fig = f'aggregate_{pol_iter}.png'
+    output_fig = f'seasonality_analysis_{pol_iter}.png'
     plt.savefig(output_fig, dpi=300, transparent=True)
     plt.close()
     
