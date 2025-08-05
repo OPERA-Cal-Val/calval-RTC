@@ -37,22 +37,25 @@ for i, d in enumerate(data_dirs):
     output_html = Path(output).with_suffix('.html')
     output_pdf = Path(output).with_suffix('.pdf')
 
-    try:
-        pm.execute_notebook(
-            "ALE.ipynb",
-            output,
-            kernel_name="python3",
-            parameters=parameters,
-        )
+    if not output_pdf.exists():
+        try:
+            pm.execute_notebook(
+                "ALE.ipynb",
+                output,
+                kernel_name="python3",
+                parameters=parameters,
+            )
 
-        subprocess.run([f"jupyter nbconvert {output} --to html"], shell=True)
-        subprocess.run(
-            [f"pandoc {output_html} -o {output_pdf} --pdf-engine=weasyprint"],
-            shell=True,
-        )
-    except (ValueError, IndexError):
-        print(f'ALE analysis of {d} failed, move onto next file')
-        pass
+            subprocess.run([f"jupyter nbconvert {output} --to html"], shell=True)
+            subprocess.run(
+                [f"pandoc {output_html} -o {output_pdf} --pdf-engine=weasyprint"],
+                shell=True,
+            )
+        except (ValueError, IndexError):
+            print(f'ALE analysis of {d} failed, move onto next file')
+            pass
+    else:
+        print(f'ALE already run on scene {d}')
 
 
 # plot aggregate ALE

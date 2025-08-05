@@ -34,17 +34,22 @@ parameters = {
 
 # Step 1: Download and merge RTC/RTC-STATIC product bursts by acquisition
 for s in scenes:
-    parameters["scene"] = s
-    try:
-        pm.execute_notebook(
-            "OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb",
-            f"output_{s}_OPERA_RTC_download_reproject_mosaic_"
-            f"sample_bursts.ipynb",
-            kernel_name="python3",
-            parameters=parameters
-        )
-    except Exception:
-        pass
+    # only attempt download/prep if scene does not already exist locally
+    tif_files = list(Path.cwd().rglob(f"*{s}*/*.tif"))
+    if len(tif_files) == 0:
+        parameters["scene"] = s
+        try:
+            pm.execute_notebook(
+                "OPERA_RTC_download_reproject_mosaic_sample_bursts.ipynb",
+                f"output_{s}_OPERA_RTC_download_reproject_mosaic_"
+                f"sample_bursts.ipynb",
+                kernel_name="python3",
+                parameters=parameters
+            )
+        except Exception:
+            pass
+    else:
+        print(f'Scene {s} already downloaded')
 
 # flag and delete folders/notebooks corresponding to failed downloads
 for folder in Path(base_dir).iterdir():
