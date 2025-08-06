@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 
+import pandas as pd
 import papermill as pm
 
 # list of paths to OPERA-RTC mosaics on which to run RLE
