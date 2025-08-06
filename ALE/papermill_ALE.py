@@ -172,3 +172,11 @@ for ale_dim in ['Northing', 'Easting']:
     output_fig = output_dir/f'aggregate_{ale_dim}.png'
     plt.savefig(output_fig, dpi=300, transparent=True)
     plt.close()
+
+
+# Report percentage of scenes that pass
+condition = (df['Easting_Bias'].abs() > 6) | (df['Northing_Bias'].abs() > 6)
+count = condition.sum()
+pass_percentage = 100 - ((count / len(df)) * 100)
+
+print(f"Percentage of scenes which pass: {pass_percentage:.2f}%")

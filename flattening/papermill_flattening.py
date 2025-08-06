@@ -275,3 +275,11 @@ plt.errorbar(
 output_fig = 'aggregate_flattening_calvalPLOT.png'
 plt.savefig(output_fig, dpi=300, transparent=True)
 plt.close()
+
+
+# Report percentage of scenes that pass
+condition = df['Foreslope Median - Backslope Median'].abs() > 1
+count = condition.sum()
+pass_percentage = 100 - ((count / len(df)) * 100)
+
+print(f"Percentage of scenes which pass: {pass_percentage:.2f}%")

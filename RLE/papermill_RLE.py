@@ -46,3 +46,14 @@ for i, d in enumerate(stack_dirs):
             [f"pandoc {output_html} -o {output_pdf} --pdf-engine=weasyprint"],
             shell=True,
         )
+
+        # Load data
+        rle_csv_file = next(output_dirs[i].parent.glob(f'*{p}*.csv'), None)
+        df = pd.read_csv(rle_csv_file)
+
+        # Report percentage of scenes that pass
+        condition = (df['tile_mean_x'].abs() > 6) | (df['tile_mean_y'].abs() > 6)
+        count = condition.sum()
+        pass_percentage = 100 - ((count / len(df)) * 100)
+
+        print(f"Percentage of scenes for {p} polarization which pass: {pass_percentage:.2f}%")
