@@ -224,7 +224,8 @@ ax.axhline(0, color='black')
 ax.axvline(0, color='black')
 
 ax.set_title(
-    fr"$\Delta$ VH: {mean_VH:.3f} ± {mean_VH_std:.3f} dB,\n"
+    fr"$\Delta$ VH: {mean_VH:.3f} ± {mean_VH_std:.3f} dB"
+    "\n"
     fr"$\Delta$ VV: {mean_VV:.3f} ± {mean_VV_std:.3f} dB"
 )
 
@@ -281,5 +282,4 @@ plt.close()
 condition = df['Foreslope Median - Backslope Median'].abs() > 1
 count = condition.sum()
 pass_percentage = 100 - ((count / len(df)) * 100)
-
 print(f"Percentage of scenes which pass: {pass_percentage:.2f}%")
