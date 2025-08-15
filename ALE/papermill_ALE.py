@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import papermill as pm
+from papermill.exceptions import PapermillExecutionError
 
 # Specify parent directory of OPERA-RTC mosaics on which to run ALE
 data_dirs_parent = "/home/jovyan/calval-RTC"
@@ -51,7 +52,7 @@ for i, d in enumerate(data_dirs):
                 [f"pandoc {output_html} -o {output_pdf} --pdf-engine=weasyprint"],
                 shell=True,
             )
-        except (ValueError, IndexError):
+        except PapermillExecutionError as e:
             print(f'ALE analysis of {d} failed, move onto next file')
             pass
     else:
