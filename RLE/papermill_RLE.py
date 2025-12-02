@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 
+import pandas as pd
 import papermill as pm
 
 # list of paths to OPERA-RTC mosaics on which to run RLE
@@ -11,7 +12,7 @@ stack_dirs = [
 # True to delete mosaicked RTCs and static files, False to save
 delete_mosaics = False
 
-output_dirs = [Path.cwd() / f"RLE_{Path(p).name}" for p in stack_dirs]
+output_dirs = [Path(f"{p}/output_RLE/RLE_{Path(p).name}") for p in stack_dirs]
 
 polarizations = ["VV", "VH"]
 
@@ -33,7 +34,7 @@ for i, d in enumerate(stack_dirs):
             "delete_mosaics": delete_mosaics,
             "cleanup_list": cleanup_list,
         }
-        output_dirs[i].mkdir(exist_ok=True)
+        output_dirs[i].mkdir(exist_ok=True, parents=True)
         output = output_dirs[i] / f"output_{Path(d).name}_{p}_RLE.ipynb"
         output_html = Path(output).with_suffix('.html')
         output_pdf = Path(output).with_suffix('.pdf')
@@ -46,3 +47,14 @@ for i, d in enumerate(stack_dirs):
             [f"pandoc {output_html} -o {output_pdf} --pdf-engine=weasyprint"],
             shell=True,
         )
+
+        # Load data
+        rle_csv_file = next(output_dirs[i].parent.glob(f'*{p}*.csv'), None)
+        df = pd.read_csv(rle_csv_file)
+
+        # Report percentage of scenes that pass
+        condition = (df['tile_mean_x'].abs() > 6) | (df['tile_mean_y'].abs() > 6)
+        count = condition.sum()
+        pass_percentage = 100 - ((count / len(df)) * 100)
+
+        print(f"Percentage of scenes for {p} polarization which pass: {pass_percentage:.2f}%")
